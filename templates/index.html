@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A.W.A.R.E. - Sidebar Layout</title>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Montserrat', Arial, sans-serif;
+    display: flex;
+    height: 100vh;
+    background: #ebf6f5;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 250px;
+    background: #68d388;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    padding-top: 2rem;
+  }
+  .sidebar h2 {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  .sidebar ul {
+    list-style: none;
+    padding: 0;
+  }
+  .sidebar ul li {
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .sidebar ul li:hover {
+    background: #1400c6;
+  }
+  .sidebar ul li.active {
+    background: #1400c6;
+  }
+  .sidebar ul li ul {
+    display: none;
+    padding-left: 1rem;
+    background: #5ac27e;
+  }
+  .sidebar ul li ul li {
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  /* Main content */
+  .main-content {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+  }
+
+  section {
+    display: none;
+    background: #fff;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  section.active {
+    display: block;
+  }
+
+  input, textarea, button {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border-radius: 1rem;
+    border: 1px solid #d0eada;
+    box-sizing: border-box;
+  }
+  button {
+    background: #68d388;
+    color: #fff;
+    cursor: pointer;
+    border: none;
+  }
+  button:hover { background: #1400c6; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>A.W.A.R.E.</h2>
+  <ul>
+    <li onclick="showSection('home')">Home</li>
+    <li id="featuresMenu">Features
+      <ul>
+        <li onclick="showSection('classifier')">AI Classifier</li>
+        <li onclick="showSection('guide')">Recycling Guide</li>
+        <li onclick="showSection('soil-analysis')">Soil Analysis</li>
+        <li onclick="showSection('calculator')">Carbon Footprint Calculator</li>
+        <li onclick="showSection('leaderboard')">Leaderboard</li>
+      </ul>
+    </li>
+    <li onclick="showSection('about-us')">About Us</li>
+    <li onclick="showSection('contact-us')">Contact Us</li>
+    <li onclick="showSection('login')">Login</li>
+    <li onclick="showSection('register')">Register</li>
+    <li onclick="showSection('faq')">FAQ</li>
+    <li onclick="showSection('community')">Community</li>
+  </ul>
+</div>
+
+<div class="main-content">
+  <section id="home" class="active">
+    <h2>Welcome to A.W.A.R.E.</h2>
+    <p>AI-powered platform to classify waste, guide recycling, analyze soil, and calculate your carbon footprint!</p>
+  </section>
+
+<section id="classifier">
+  <h3>Upload Waste Image</h3>
+  <input type="file" id="imageUpload" accept="image/*" />
+  <button id="classifyBtn">Classify</button>
+  <div id="result"></div>
+</section>
+
+  <section id="guide">
+    <h3>Recycling Guide</h3>
+    <input type="text" placeholder="Search Material..." oninput="searchMaterial(this.value)">
+    <ul id="guideList"></ul>
+  </section>
+
+  <section id="soil-analysis">
+    <h3>Soil Analysis</h3>
+    <input type="number" id="pH" placeholder="Enter soil pH">
+    <input type="number" id="potashLevel" placeholder="Enter potash level">
+    <button id="soilBtn">Analyze</button>
+    <div id="soilResult"></div>
+  </section>
+
+  <section id="calculator">
+    <h3>Carbon Footprint Calculator</h3>
+    <input type="number" id="electricity" placeholder="Electricity usage">
+    <input type="number" id="water" placeholder="Water usage">
+    <input type="number" id="transport" placeholder="Transport">
+    <button id="calcBtn">Calculate</button>
+    <div id="footprintResult"></div>
+  </section>
+
+  <section id="leaderboard">
+    <h3>Leaderboard</h3>
+    <ul>
+      <li>User1 - 120 pts</li>
+      <li>User2 - 110 pts</li>
+      <li>User3 - 90 pts</li>
+    </ul>
+  </section>
+
+  <section id="about-us">
+    <h2>About Us</h2>
+    <p>We are a group of eco-conscious developers using AI and data-driven tools to promote recycling, sustainable living, and environmental awareness. Our mission is to make it easy for everyone to understand how to manage waste, analyze soil for gardening, and reduce their carbon footprint.</p>
+  </section>
+
+  <section id="contact-us">
+    <h2>Contact Us</h2>
+    <p>Reach us at <strong>support@aware.com</strong> or fill the form below:</p>
+    <form onsubmit="event.preventDefault(); alert('Message sent!');">
+      <input type="text" placeholder="Name" required>
+      <input type="email" placeholder="Email" required>
+      <textarea placeholder="Message" required></textarea>
+      <button type="submit">Send Message</button>
+    </form>
+  </section>
+
+  <section id="login">
+    <h2>Login</h2>
+    <form onsubmit="event.preventDefault(); alert('Login successful!');">
+      <input type="text" placeholder="Username" required>
+      <input type="password" placeholder="Password" required>
+      <button type="submit">Login</button>
+    </form>
+    <p>Don't have an account? Click Register to sign up.</p>
+  </section>
+
+  <section id="register">
+    <h2>Register</h2>
+    <form onsubmit="event.preventDefault(); alert('Registered successfully!');">
+      <input type="text" placeholder="Username" required>
+      <input type="email" placeholder="Email" required>
+      <input type="password" placeholder="Password" required>
+      <button type="submit">Register</button>
+    </form>
+    <p>Already have an account? Click Login to sign in.</p>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <ul>
+      <li><strong>How does the AI classifier work?</strong> It uses a machine learning model to identify waste types and suggest proper disposal.</li>
+      <li><strong>Is my data safe?</strong> Yes, all uploaded images and inputs are processed locally or anonymously.</li>
+      <li><strong>Can I track my carbon footprint over time?</strong> Yes, you can keep a personal log of your inputs and results.</li>
+      <li><strong>How accurate is the soil analysis?</strong> It provides a guideline based on entered pH and nutrient levels.</li>
+    </ul>
+  </section>
+
+  <section id="community">
+    <h2>Community</h2>
+    <p>Join the conversation! Share eco tips, recycling hacks, or gardening advice.</p>
+    <form onsubmit="event.preventDefault(); postCommunity();">
+      <textarea id="communityPost" placeholder="Share your tip..." required></textarea>
+      <button type="submit">Post</button>
+    </form>
+    <div id="communityPosts">
+      <p><strong>User1:</strong> Always separate plastics from organic waste!</p>
+      <p><strong>User2:</strong> Composting is great for home gardens.</p>
+      <p><strong>User3:</strong> Reduce water usage by fixing leaks early.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Show/hide sections
+  function showSection(id){
+    document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
+    const section = document.getElementById(id);
+    if(section) section.classList.add('active');
+  }
+
+  // Toggle Features submenu
+  const featuresMenu = document.getElementById('featuresMenu');
+  featuresMenu.addEventListener('click', (e)=>{
+    const submenu = featuresMenu.querySelector('ul');
+    submenu.style.display = submenu.style.display === 'block' ? 'none' : 'block';
+  });
+async function classifyImage() {
+  const fileInput = document.getElementById("imageUpload");
+  const out = document.getElementById("result");
+
+  if (!fileInput.files.length) {
+    out.innerText = "Please upload an image.";
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const formData = new FormData();
+  formData.append("file", file);
+
+  out.innerText = "Classifying...";
+
+  try {
+    const response = await fetch("/predict", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      out.innerHTML = `Detected Waste Category: <strong>${data.prediction}</strong>`;
+    } else {
+      out.innerText = "Error: " + data.error;
+    }
+  } catch (err) {
+    out.innerText = "Error: " + err.message;
+  }
+}
+
+document.getElementById("classifyBtn").addEventListener("click", classifyImage);
+
+  // Recycling Guide Search
+  function searchMaterial(query){
+    const guideList = document.getElementById("guideList");
+    const tips = { plastic:"Recycle bottles", glass:"Separate by color", metal:"Aluminium is recyclable", organic:"Compostable", paper:"Recycle clean paper", battery:"Take to recycling center" };
+    guideList.innerHTML = "";
+    if(query.trim()!=="") Object.keys(tips).forEach(k=>{
+      if(k.includes(query.toLowerCase())){
+        let li=document.createElement("li");
+        li.textContent=k.toUpperCase()+": "+tips[k];
+        guideList.appendChild(li);
+      }
+    });
+  }
+
+  // Community Post
+  function postCommunity(){
+    const post = document.getElementById('communityPost').value;
+    if(post.trim()!==""){
+      const div = document.getElementById('communityPosts');
+      const p = document.createElement('p');
+      p.innerHTML = `<strong>You:</strong> ${post}`;
+      div.prepend(p);
+      document.getElementById('communityPost').value = '';
+    }
+  }
+  // ===== Soil Analysis =====
+document.getElementById('soilBtn').addEventListener('click', async () => {
+  const pH = document.getElementById("pH").value;
+  const potash = document.getElementById("potashLevel").value;
+  const out = document.getElementById("soilResult");
+  if(!pH || !potash){ out.innerText="Please enter both values."; return; }
+
+  try {
+    const res = await fetch("/soil-analysis", {
+      method:"POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({pH, potashLevel: potash})
+    });
+    const data = await res.json();
+    if(res.ok) out.innerText = data.result;
+    else out.innerText = "Error: " + data.error;
+  } catch(e){ out.innerText="Error: " + e.message; }
+});
+
+// ===== Carbon Footprint =====
+document.getElementById('calcBtn').addEventListener('click', async () => {
+  const electricity = parseFloat(document.getElementById("electricity").value) || 0;
+  const water = parseFloat(document.getElementById("water").value) || 0;
+  const transport = parseFloat(document.getElementById("transport").value) || 0;
+  const out = document.getElementById("footprintResult");
+
+  try {
+    const res = await fetch("/carbon-footprint", {
+      method:"POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({electricity, water, transport})
+    });
+    const data = await res.json();
+    if(res.ok) out.innerText = `Estimated Carbon Footprint:\n${data.footprint}`;
+    else out.innerText = "Error: " + data.error;
+  } catch(e){ out.innerText = "Error: " + e.message; }
+});
+
+</script>
+</body>
+</html>
