@@ -60,28 +60,49 @@ def soil_analysis():
     try:
         exe = "./soil_analysis" if os.name != "nt" else "soil_analysis.exe"
         # Call the C++ executable with ph and potash
-        result = subprocess.check_output([exe, str(ph), str(potash)], text=True)
-        return jsonify({"result": result})
+        result = subprocess.check_output([exe], input=f"{ph} {potash}\n", text=True)
+
+        return jsonify({"result": result.strip()})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
 # ===== Carbon Footprint =====
+# @app.route("/carbon-footprint", methods=["POST"])
+# def carbon_footprint():
+#     data = request.json
+#     electricity = data.get("electricity")
+#     water = data.get("water")
+#     transport = data.get("transport")
+#     if electricity is None or water is None or transport is None:
+#         return jsonify({"error": "Missing input values"}), 400
+
+#     try:
+#         exe = "./carbon_footprint" if os.name != "nt" else "footprint.exe"
+#         result = subprocess.check_output([exe], input=f"{electricity} {water} {transport}\n", text=True)
+
+#         return jsonify({"footprint": result.strip()})
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
 @app.route("/carbon-footprint", methods=["POST"])
 def carbon_footprint():
     data = request.json
     electricity = data.get("electricity")
     water = data.get("water")
     transport = data.get("transport")
+
     if electricity is None or water is None or transport is None:
         return jsonify({"error": "Missing input values"}), 400
 
     try:
-        exe = "./carbon_footprint" if os.name != "nt" else "footprint.exe"
-        result = subprocess.check_output([exe, str(electricity), str(water), str(transport)], text=True)
-        return jsonify({"footprint": result})
+        exe = os.path.join(os.getcwd(), "footprint.exe")  # full path
+        # Pass input via stdin
+        result = subprocess.check_output([exe], input=f"{electricity} {water} {transport}\n", text=True)
+        return jsonify({"footprint": result.strip()})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+     return jsonify({"error": str(e)}), 500
+
+
 
 
 if __name__ == "__main__":
