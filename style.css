@@ -1,0 +1,125 @@
+ body {
+    margin: 0;
+    font-family: 'Montserrat', Arial, sans-serif;
+    display: flex;
+    height: 100vh;
+    background: #ebf6f5;
+    overflow-x: hidden;
+  }
+  /* Hamburger menu */
+  .hamburger {
+    position: fixed;
+    top: 1.5rem;
+    left: 1.5rem;
+    width: 32px;
+    height: 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    z-index: 1001;
+  }
+  .hamburger span {
+    display: block;
+    height: 4px;
+    width: 100%;
+    background: #399E5A;
+    border-radius: 2px;
+    transition: 0.3s;
+  }
+  /* Sidebar */
+  .sidebar {
+    position: fixed;
+    left: -250px;
+    top: 0;
+    width: 250px;
+    height: 100vh;
+    background:#26532B;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    padding-top: 2rem;
+    transition: left 0.3s;
+    z-index: 1000;
+  }
+  .sidebar.open { left: 0; }
+  .sidebar ul { list-style: none; padding: 0; }
+  .sidebar ul li {
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .sidebar ul li:hover,
+  .sidebar ul li.active { background:#399E5A; }
+  .sidebar ul li ul {
+    display: none;
+    padding-left: rem;
+    background:#26532B;
+  }
+  .sidebar ul li ul li {
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
+  }
+  /* Main content */
+  #home h3 {
+  color: #28a745; /* eco-green */
+  font-style: italic;
+  font-size: 1.4rem;
+  margin: 0.5rem 0 1.5rem 0;
+  text-align: center;
+}
+#home h3 i {
+  margin-right: 8px;
+  color: #26532B;
+}
+
+
+  .main-content {
+    flex: 1;
+    margin-left: 0;
+    padding: 2rem;
+    overflow-y: auto;
+    width: 100vw;
+    transition: margin-left 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .sidebar.open ~ .main-content {
+    margin-left: 250px;
+    width: calc(100vw - 250px);
+  }
+  .main-title {
+    text-align: center;
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 2rem;
+    color: #399E5A;
+    letter-spacing: 2px;
+  }
+  section {
+    display: none;
+    background: #fff;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 700px;
+  }
+  section.active { display: block; }
+  input, textarea, button {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border-radius: 1rem;
+    border: 1px solid #d0eada;
+    box-sizing: border-box;
+  }
+  button {
+    background: #68d388;
+    color: #fff;
+    cursor: pointer;
+    border: none;
+  }
+  button:hover { background: #399E5A; }
