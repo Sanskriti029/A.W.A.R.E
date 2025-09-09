@@ -1,201 +1,249 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>A.W.A.R.E. </title>
-<style>
-  body {
-    margin: 0;
-    font-family: 'Montserrat', Arial, sans-serif;
-    display: flex;
-    height: 100vh;
-    background: #ebf6f5;
-    overflow-x: hidden;
-  }
-  /* Hamburger menu */
-  .hamburger {
-    position: fixed;
-    top: 0.8rem;
-    left: 1.5rem;
-    width: 28px;
-    height: 24px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    cursor: pointer;
-    z-index: 1001;
-  }
-  .hamburger span {
-    display: block;
-    height: 4px;
-    width: 100%;
-    background: #399E5A;
-    border-radius: 2px;
-    transition: 0.3s;
-  }
-  /* Sidebar */
-  .sidebar {
-    margin-bottom: 5vh;
-    position: fixed;
-    left: -250px;
-    top: 0;
-    width: 250px;
-    height: 100vh;
-    background:#26532B;
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    padding-top: 2rem;
-    transition: left 0.3s;
-    z-index: 1000;
-  }
-  .sidebar.open { left: 0; }
-  .sidebar ul { list-style: none; padding: 0; }
-  .sidebar ul li {
-    padding: 0.75rem 1.5rem;
-    cursor: pointer;
-    transition: 0.2s;
-  }
-  .sidebar ul li:hover,
-  .sidebar ul li.active { background:#399E5A; }
-  .sidebar ul li ul {
-    display: none;
-    padding-left: rem;
-    background:#26532B;
-  }
-  .sidebar ul li ul li {
-    padding: 0.5rem 1rem;
-    font-size: 0.95rem;
-  }
-  /* Main content */
-  #home h3 {
-  color: #28a745; /* eco-green */
-  font-style: italic;
-  font-size: 1.4rem;
-  margin: 0.5rem 0 1.5rem 0;
-  text-align: center;
-}
-#home h3 i {
-  margin-right: 8px;
-  color: #26532B;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A.W.A.R.E. </title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Montserrat', Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+      background: #ebf6f5;
+      overflow-x: hidden;
+    }
+
+    /* Hamburger menu */
+    .hamburger {
+      position: fixed;
+      top: 0.8rem;
+      left: 1.5rem;
+      width: 28px;
+      height: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      z-index: 1001;
+    }
+
+    .hamburger span {
+      display: block;
+      height: 4px;
+      width: 100%;
+      background: #399E5A;
+      border-radius: 2px;
+      transition: 0.3s;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      margin-bottom: 5vh;
+      position: fixed;
+      left: -250px;
+      top: 0;
+      width: 250px;
+      height: 100vh;
+      background: #26532B;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      padding-top: 2rem;
+      transition: left 0.3s;
+      z-index: 1000;
+    }
+
+    .sidebar.open {
+      left: 0;
+    }
+
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .sidebar ul li {
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .sidebar ul li:hover,
+    .sidebar ul li.active {
+      background: #399E5A;
+    }
+
+    .sidebar ul li ul {
+      display: none;
+      padding-left: rem;
+      background: #26532B;
+    }
+
+    .sidebar ul li ul li {
+      padding: 0.5rem 1rem;
+      font-size: 0.95rem;
+    }
+
+    /* Main content */
+    #home h3 {
+      color: #28a745;
+      /* eco-green */
+      font-style: italic;
+      font-size: 1.4rem;
+      margin: 0.5rem 0 1.5rem 0;
+      text-align: center;
+    }
+
+    #home h3 i {
+      margin-right: 8px;
+      color: #26532B;
+    }
 
 
-  .main-content {
-    flex: 1;
-    margin-left: 0;
-    padding: 2rem;
-    overflow-y: auto;
-    width: 100vw;
-    transition: margin-left 0.3s;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .sidebar.open ~ .main-content {
-    margin-left: 250px;
-    width: calc(100vw - 250px);
-  }
-  .main-title {
-    text-align: center;
-    font-size: 2.5rem;
-    font-weight: bold;
-    margin-bottom: 2rem;
-    color: #399E5A;
-    letter-spacing: 2px;
-  }
-  section {
-    display: none;
-    background: #fff;
-    padding: 2rem;
-    margin-bottom: 2rem;
-    border-radius: 1rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    width: 100%;
-    max-width: 700px;
-  }
-  section.active { display: block; }
-  input, textarea, button {
-    width: 100%;
-    padding: 0.75rem;
-    margin-bottom: 1rem;
-    border-radius: 1rem;
-    border: 1px solid #d0eada;
-    box-sizing: border-box;
-  }
-  button {
-    background: #68d388;
-    color: #fff;
-    cursor: pointer;
-    border: none;
-  }
-  button:hover { background: #399E5A; }
-  .bottom-right-image {
-  position: fixed;
-  bottom: 10px;
-  right: 10px;
-  z-index: 1000;
-}
-/* .bottom-right-image img {
+    .main-content {
+      flex: 1;
+      margin-left: 0;
+      padding: 2rem;
+      overflow-y: auto;
+      width: 100vw;
+      transition: margin-left 0.3s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .sidebar.open~.main-content {
+      margin-left: 250px;
+      width: calc(100vw - 250px);
+    }
+
+    .main-title {
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 2rem;
+      color: #399E5A;
+      letter-spacing: 2px;
+    }
+
+    section {
+      display: none;
+      background: #fff;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 700px;
+    }
+
+    section.active {
+      display: block;
+    }
+
+    input,
+    textarea,
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border-radius: 1rem;
+      border: 1px solid #d0eada;
+      box-sizing: border-box;
+    }
+
+    button {
+      background: #68d388;
+      color: #fff;
+      cursor: pointer;
+      border: none;
+    }
+
+    button:hover {
+      background: #399E5A;
+    }
+
+    .bottom-right-image {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      z-index: 1000;
+    }
+
+    /* .bottom-right-image img {
   width: 100px; /* adjust size */
-  /* height: auto; 
-} */ 
- 
-</style>
+    /* height: auto; 
+} */
+  </style>
 </head>
+
 <body>
 
-<div class="hamburger" id="hamburger">
-  <span></span><span></span><span></span>
-</div>
+  <div class="hamburger" id="hamburger">
+    <span></span><span></span><span></span>
+  </div>
 
-<div class="sidebar" id="sidebar">
-  <ul>
-    <li onclick="showSection('home')">Home</li>
+  <div class="sidebar" id="sidebar">
+    <ul>
+      <li onclick="showSection('home')">Home</li>
 
-    <li id="featuresMenu">Features
-      <ul>
-        <li onclick="showSection('classifier')">AI Classifier</li>
-        <li onclick="showSection('guide')">Recycling Guide</li>
-        <!-- <li onclick="showSection('soil-analysis')">Soil Analysis</li> -->
-        <!-- <li onclick="showSection('calculator')">Carbon Footprint Calculator</li> -->
-        <li onclick="showSection('leaderboard')">Leaderboard</li>
-      </ul>
-    </li>
-    <li onclick="showSection('Login')">Login</li>
-    <li onclick="showSection('about-us')">About Us</li>
-    <li onclick="showSection('contact-us')">Contact Us</li>
-  </ul>
-</div>
+      <li id="featuresMenu">Features
+        <ul>
+          <li onclick="showSection('classifier')">AI Classifier</li>
+          <li onclick="showSection('guide')">Recycling Guide</li>
+          <!-- <li onclick="showSection('soil-analysis')">Soil Analysis</li> -->
+          <!-- <li onclick="showSection('calculator')">Carbon Footprint Calculator</li> -->
+          <li onclick="showSection('leaderboard')">Leaderboard</li>
+        </ul>
+      </li>
+      
+      <li onclick="showSection('Login')">Login</li>
+      <li onclick="showSection('register')">Register </li>
+      <li onclick="showSection('about-us')">About Us</li>
+      <li onclick="showSection('contact-us')">Contact Us</li>
+      
+    </ul>
+  </div>
 
-<div class="main-content">
-  
-  <div class="main-title">A.W.A.R.E.</div>
+  <div class="main-content">
 
-  <!-- Sections -->
-  <section id="home" class="active">
-  <h2>Welcome to A.W.A.R.E.</h2>
-  <h3>♻️ A.W.A.R.E. - Artificial Waste Analysis and Recycling Engine</h3>
-  <p>
-    AI-powered platform to classify waste, guide recycling, analyze soil, and
-    calculate your carbon footprint!
-  </p>
-</section>
+    <div class="main-title">A.W.A.R.E.</div>
 
-  <section id="classifier">
+    <!-- Sections -->
+    <section id="home" class="active">
+      <h2>Welcome to A.W.A.R.E.</h2>
+      <h3>♻️ A.W.A.R.E. - Artificial Waste Analysis and Recycling Engine</h3>
+      <p>
+        AI-powered platform to classify waste, guide recycling, analyze soil, and
+        calculate your carbon footprint!
+      </p>
+    </section>
+
+    <!-- <section id="classifier">
     <h2>AI Waste Classifier</h2>
     <input type="file" id="imageUpload" accept="image/*">
     <button id="classifyBtn">Classify Waste</button>
     <p id="result"></p>
-  </section>
+  </section> -->
 
-  <section id="guide">
-    <h2>Recycling Guide</h2>
-    <input type="text" placeholder="Enter material..." onkeyup="searchMaterial(this.value)">
-    <ul id="guideList"></ul>
-  </section>
-<!-- 
+    <!-- Classifier Section -->
+    <section id="classifier">
+      <h2>AI Waste Classifier</h2>
+      <input type="file" id="imageUpload" accept="image/*">
+      <button id="classifyBtn">Classify Waste</button>
+      <p id="result"></p>
+      <p id="wasteType"></p>
+      <p id="recyclingProcess"></p>
+    </section>
+
+    <section id="guide">
+      <h2>Recycling Guide</h2>
+      <input type="text" placeholder="Enter material..." onkeyup="searchMaterial(this.value)">
+      <ul id="guideList"></ul>
+    </section>
+    <!-- 
   <section id="soil-analysis">
     <h2>Soil Analysis</h2> -->
     <!-- <input type="number" id="pH" placeholder="Enter soil pH">
@@ -205,7 +253,7 @@
     <!-- <p>Coming soon...</p>
   </section> -->
 
-  <!-- <section id="calculator"> -->
+    <!-- <section id="calculator"> -->
     <!-- <h2>Carbon Footprint Calculator</h2> -->
     <!-- <input type="number" id="electricity" placeholder="Electricity usage (kWh)">
     <input type="number" id="water" placeholder="Water usage (liters)">
@@ -213,162 +261,214 @@
     <button id="calcBtn">Calculate</button>
     <p id="footprintResult"></p> -->
     <!-- <p>Coming soon...</p> -->
-  <!-- </section> -->
+    <!-- </section> -->
 
-    <section id="Login">
+    <!-- <section id="Login">
     <h2>Login</h2>
     <p>Coming soon...</p>
-  </section>
+  </section> -->
+    <section id="Login" class="auth">
+      <h2>Login</h2>
+      <form onsubmit="event.preventDefault(); alert('Demo only');">
+        <input type="text" placeholder="Username" required />
+        <input type="password" placeholder="Password" required />
+        <button type="submit">Login</button>
+        <p>Don't have an account? <a href="#register">Register</a></p>
+      </form>
+    </section>
+    <section id="leaderboard">
+      <h2>Leaderboard</h2>
+      <p>Coming soon...</p>
+    </section>
 
-  <section id="leaderboard">
-    <h2>Leaderboard</h2>
-    <p>Coming soon...</p>
-  </section>
+    <section id="about-us">
+      <h2>About Us</h2>
+      <p>
+        We are a group of eco-conscious developers using AI and data-driven tools to promote
+        recycling, sustainable living, and environmental awareness. Our mission is to make it easy
+        for everyone to understand how to manage waste, analyze soil for gardening, and reduce
+        their carbon footprint.
+      </p>
+    </section>
 
- <section id="about-us">
-    <h2>About Us</h2>
-    <p>
-      We are a group of eco-conscious developers using AI and data-driven tools to promote
-      recycling, sustainable living, and environmental awareness. Our mission is to make it easy
-      for everyone to understand how to manage waste, analyze soil for gardening, and reduce
-      their carbon footprint.
-    </p>
-  </section>
+    <!-- Contact Us Section -->
+    <section id="contact-us">
+      <h2>Contact Us</h2>
+      <p>
+        Reach us at <strong>support@aware.com</strong> or fill the form below:
+      </p>
+      <form onsubmit="event.preventDefault(); alert('Message sent!');">
+        <input type="text" placeholder="Name" required>
+        <input type="email" placeholder="Email" required>
+        <textarea placeholder="Message" required></textarea>
+        <button type="submit">Send Message</button>
+      </form>
+    </section>
 
-  <!-- Contact Us Section -->
-  <section id="contact-us">
-    <h2>Contact Us</h2>
-    <p>
-      Reach us at <strong>support@aware.com</strong> or fill the form below:
-    </p>
-    <form onsubmit="event.preventDefault(); alert('Message sent!');">
-      <input type="text" placeholder="Name" required>
-      <input type="email" placeholder="Email" required>
-      <textarea placeholder="Message" required></textarea>
-      <button type="submit">Send Message</button>
+<section id="register">
+    <h2>Register</h2>
+    <form onsubmit="event.preventDefault(); alert('Demo only');">
+      <input type="text" placeholder="Username" required />
+      <input type="email" placeholder="Email" required />
+      <input type="password" placeholder="Password" required />
+      <button type="submit">Register</button>
     </form>
   </section>
-
-</div>
-<!-- <div class="bottom-right-image">
+  </div>
+  <!-- <div class="bottom-right-image">
   <img src="icons8-ecosystem-64.png" alt="Plant in pot">
 </div>   -->
-<!-- <div class="bottom-right-image">
+  <!-- <div class="bottom-right-image">
   <img src="{{ url_for('static', filename='images/icons8-ecosystem-64') }}" alt="Plant in pot">
 </div> -->
 
-<script>
-  const hamburger = document.getElementById("hamburger");
-  const sidebar = document.getElementById("sidebar");
-  const featuresMenu = document.getElementById("featuresMenu");
-  const sections = document.querySelectorAll("section");
-  const menuItems = document.querySelectorAll(".sidebar ul li");
+  <script>
+    const hamburger = document.getElementById("hamburger");
+    const sidebar = document.getElementById("sidebar");
+    const featuresMenu = document.getElementById("featuresMenu");
+    const sections = document.querySelectorAll("section");
+    const menuItems = document.querySelectorAll(".sidebar ul li");
 
-  // Toggle sidebar
-  hamburger.addEventListener("click", () => {
-    sidebar.classList.toggle("open");
-  });
+    // Toggle sidebar
+    hamburger.addEventListener("click", () => {
+      sidebar.classList.toggle("open");
+    });
 
-  // Toggle features submenu
-  featuresMenu.addEventListener("click", (e) => {
-    if (e.target === featuresMenu) {
-      const submenu = featuresMenu.querySelector("ul");
-      submenu.style.display = submenu.style.display === "block" ? "none" : "block";
+    // Toggle features submenu
+    featuresMenu.addEventListener("click", (e) => {
+      if (e.target === featuresMenu) {
+        const submenu = featuresMenu.querySelector("ul");
+        submenu.style.display = submenu.style.display === "block" ? "none" : "block";
+      }
+    });
+
+    // Show sections
+    function showSection(sectionId) {
+      sections.forEach(sec => sec.classList.remove("active"));
+      document.getElementById(sectionId)?.classList.add("active");
+
+      menuItems.forEach(item => item.classList.remove("active"));
+      const activeItem = [...menuItems].find(li =>
+        li.getAttribute("onclick")?.includes(sectionId)
+      );
+      if (activeItem) activeItem.classList.add("active");
     }
-  });
 
-  // Show sections
-  function showSection(sectionId) {
-    sections.forEach(sec => sec.classList.remove("active"));
-    document.getElementById(sectionId)?.classList.add("active");
+    // // ===== AI Classifier =====
+    // async function classifyImage() {
+    //   const fileInput = document.getElementById("imageUpload");
+    //   const out = document.getElementById("result");
+    //   if (!fileInput.files.length) {
+    //     out.innerText = "Please upload an image.";
+    //     return;
+    //   }
+    //   const formData = new FormData();
+    //   formData.append("file", fileInput.files[0]);
+    //   out.innerText = "Classifying...";
+    //   try {
+    //     const response = await fetch("/predict", { method: "POST", body: formData });
+    //     const data = await response.json();
+    //     out.innerHTML = response.ok
+    //       ? `Detected Waste Category: <strong>${data.prediction}</strong>`
+    //       : "Error: " + data.error;
+    //   } catch (err) { out.innerText = "Error: " + err.message; }
+    // }
+    // document.getElementById("classifyBtn").addEventListener("click", classifyImage);
 
-    menuItems.forEach(item => item.classList.remove("active"));
-    const activeItem = [...menuItems].find(li =>
-      li.getAttribute("onclick")?.includes(sectionId)
-    );
-    if (activeItem) activeItem.classList.add("active");
-  }
-
-  // ===== AI Classifier =====
-  async function classifyImage() {
-    const fileInput = document.getElementById("imageUpload");
-    const out = document.getElementById("result");
-    if (!fileInput.files.length) {
-      out.innerText = "Please upload an image.";
-      return;
-    }
-    const formData = new FormData();
-    formData.append("file", fileInput.files[0]);
-    out.innerText = "Classifying...";
-    try {
-      const response = await fetch("/predict", { method: "POST", body: formData });
-      const data = await response.json();
-      out.innerHTML = response.ok
-        ? `Detected Waste Category: <strong>${data.prediction}</strong>`
-        : "Error: " + data.error;
-    } catch (err) { out.innerText = "Error: " + err.message; }
-  }
-  document.getElementById("classifyBtn").addEventListener("click", classifyImage);
-
-  // ===== Recycling Guide =====
-  function searchMaterial(query) {
-    const guideList = document.getElementById("guideList");
-    const tips = {
-      plastic: "Recycle bottles",
-      glass: "Separate by color",
-      metal: "Aluminium is recyclable",
-      organic: "Compostable",
-      paper: "Recycle clean paper",
-      battery: "Take to recycling center"
-
-    };
-    guideList.innerHTML = "";
-    if (query.trim() !== "") {
-      Object.keys(tips).forEach(k => {
-        if (k.includes(query.toLowerCase())) {
-          let li = document.createElement("li");
-          li.textContent = k.toUpperCase() + ": " + tips[k];
-          guideList.appendChild(li);
+    // ===== AI Classifier =====
+    // ===== AI Classifier =====
+    async function classifyImage() {
+      const fileInput = document.getElementById("imageUpload");
+      const out = document.getElementById("result");
+      const wasteType = document.getElementById("wasteType");
+      const recyclingProcess = document.getElementById("recyclingProcess");
+      if (!fileInput.files.length) {
+        out.innerText = "Please upload an image.";
+        return;
+      }
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+      out.innerText = "Classifying...";
+      try {
+        const response = await fetch("/predict", { method: "POST", body: formData });
+        const data = await response.json();
+        if (response.ok) {
+          out.innerHTML = `Detected Waste Category: <strong>${data.prediction}</strong>`;
+          wasteType.innerHTML = `Waste Type: <strong>${data.waste_type}</strong>`;
+          recyclingProcess.innerHTML = `Recycling Process: <strong>${data.recycling_process}</strong>`;
+        } else {
+          out.innerText = "Error: " + data.error;
+          wasteType.innerText = "";
+          recyclingProcess.innerText = "";
         }
-      });
+      } catch (err) {
+        out.innerText = "Error: " + err.message;
+        wasteType.innerText = "";
+        recyclingProcess.innerText = "";
+      }
     }
-  }
+    document.getElementById("classifyBtn").addEventListener("click", classifyImage);
 
-  // ===== Soil Analysis =====
-  // document.getElementById("soilBtn").addEventListener("click", async () => {
-  //   const pH = document.getElementById("pH").value;
-  //   const potash = document.getElementById("potashLevel").value;
-  //   const out = document.getElementById("soilResult");
-  //   if (!pH || !potash) { out.innerText = "Please enter both values."; return; }
-  //   try {
-  //     const res = await fetch("/soil-analysis", {
-  //       method: "POST",
-  //       headers: {"Content-Type":"application/json"},
-  //       body: JSON.stringify({ pH, potashLevel: potash })
-  //     });
-  //     const data = await res.json();
-  //     out.innerText = res.ok ? data.result : "Error: " + data.error;
-  //   } catch (e) { out.innerText = "Error: " + e.message; }
-  // });
+    // ===== Recycling Guide =====
+    function searchMaterial(query) {
+      const guideList = document.getElementById("guideList");
+      const tips = {
+        plastic: "Recycle bottles",
+        glass: "Separate by color",
+        metal: "Aluminium is recyclable",
+        organic: "Compostable",
+        paper: "Recycle clean paper",
+        battery: "Take to recycling center"
 
-  // ===== Carbon Footprint =====
-  // document.getElementById("calcBtn").addEventListener("click", async () => {
-  //   const electricity = parseFloat(document.getElementById("electricity").value) || 0;
-  //   const water = parseFloat(document.getElementById("water").value) || 0;
-  //   const transport = parseFloat(document.getElementById("transport").value) || 0;
-  //   const out = document.getElementById("footprintResult");
-  //   try {
-  //     const res = await fetch("/carbon-footprint", {
-  //       method: "POST",
-  //       headers: {"Content-Type":"application/json"},
-  //       body: JSON.stringify({ electricity, water, transport })
-  //     });
-  //     const data = await res.json();
-  //     out.innerText = res.ok
-  //       ? `Estimated Carbon Footprint:\n${data.footprint}`
-  //       : "Error: " + data.error;
-  //   } catch (e) { out.innerText = "Error: " + e.message; }
-  // });
-</script>
+      };
+      guideList.innerHTML = "";
+      if (query.trim() !== "") {
+        Object.keys(tips).forEach(k => {
+          if (k.includes(query.toLowerCase())) {
+            let li = document.createElement("li");
+            li.textContent = k.toUpperCase() + ": " + tips[k];
+            guideList.appendChild(li);
+          }
+        });
+      }
+    }
+
+    // ===== Soil Analysis =====
+    // document.getElementById("soilBtn").addEventListener("click", async () => {
+    //   const pH = document.getElementById("pH").value;
+    //   const potash = document.getElementById("potashLevel").value;
+    //   const out = document.getElementById("soilResult");
+    //   if (!pH || !potash) { out.innerText = "Please enter both values."; return; }
+    //   try {
+    //     const res = await fetch("/soil-analysis", {
+    //       method: "POST",
+    //       headers: {"Content-Type":"application/json"},
+    //       body: JSON.stringify({ pH, potashLevel: potash })
+    //     });
+    //     const data = await res.json();
+    //     out.innerText = res.ok ? data.result : "Error: " + data.error;
+    //   } catch (e) { out.innerText = "Error: " + e.message; }
+    // });
+
+    // ===== Carbon Footprint =====
+    // document.getElementById("calcBtn").addEventListener("click", async () => {
+    //   const electricity = parseFloat(document.getElementById("electricity").value) || 0;
+    //   const water = parseFloat(document.getElementById("water").value) || 0;
+    //   const transport = parseFloat(document.getElementById("transport").value) || 0;
+    //   const out = document.getElementById("footprintResult");
+    //   try {
+    //     const res = await fetch("/carbon-footprint", {
+    //       method: "POST",
+    //       headers: {"Content-Type":"application/json"},
+    //       body: JSON.stringify({ electricity, water, transport })
+    //     });
+    //     const data = await res.json();
+    //     out.innerText = res.ok
+    //       ? `Estimated Carbon Footprint:\n${data.footprint}`
+    //       : "Error: " + data.error;
+    //   } catch (e) { out.innerText = "Error: " + e.message; }
+    // });
+  </script>
 </body>
+
 </html>
