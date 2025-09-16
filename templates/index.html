@@ -102,12 +102,54 @@
       box-shadow: 0 8px 18px rgba(22,160,133,0.18);
       border-left-width: 12px !important;
     }
+    .account-dropdown {
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+}
+.account-dropdown .dropdown-toggle {
+  background: #16a085;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.account-dropdown .dropdown-icon {
+  transition: transform 0.3s ease;
+}
+.account-dropdown .dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 120%;
+  right: 0;
+  background: white;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+  border-radius: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0;
+  min-width: 140px;
+  z-index: 999;
+}
+.account-dropdown .dropdown-menu li {
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+}
+.account-dropdown .dropdown-menu li:hover {
+  background: #f4f4f4;
+}
+
   </style>
 </head>
 <body>
   
 <!-- Sidebar -->
 <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+
 <div class="sidebar" id="sidebar">
   <div id="userIndicator">Not logged in</div>
   <ul>
@@ -119,11 +161,11 @@
         <li class="protected" onclick="showSection('leaderboard')">Leaderboard</li>
       </ul>
     </li>
-    <li id="loginMenu" onclick="showSection('Login')">Login</li>
-    <li id="registerMenu" onclick="showSection('register')">Register</li>
-    <li id="logoutMenu" style="display:none;" onclick="logoutUser()">Logout</li>
+    <!-- <li id="loginMenu" onclick="showSection('Login')">Login</li> -->
+    <!-- <li id="registerMenu" onclick="showSection('register')">Register</li> -->
+    <!-- <li id="logoutMenu" style="display:none;" onclick="logoutUser()">Logout</li> -->
     <li class="protected" onclick="showSection('map-section')">Recycling Centers Map</li>
-    <li onclick="showSection('information')">Information</li>
+    <li class="protected" onclick="showSection('information')">Information</li>
     <li onclick="showSection('about-us')">About Us</li>
     <li onclick="showSection('contact-us')">Contact Us</li>
   </ul>
@@ -131,6 +173,26 @@
 
 <div class="main-content">
   <div class="main-title">A.W.A.R.E.</div>
+  </div>
+  <div class="account-dropdown">
+  <button class="dropdown-toggle">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" class="tnb-sign-in-icon">
+          <path d="M7 7C8.933 7 10.5 5.433 10.5 3.5C10.5 1.567 8.933 0 7 0C5.067 0 3.5 1.567 3.5 3.5C3.5 5.433 5.067 7 7 7ZM9.33333 3.5C9.33333 4.78866 8.28866 5.83333 7 5.83333C5.71134 5.83333 4.66667 4.78866 4.66667 3.5C4.66667 2.21134 5.71134 1.16667 7 1.16667C8.28866 1.16667 9.33333 2.21134 9.33333 3.5Z" fill="white"></path>
+          <path d="M14 12.8333C14 14 12.8333 14 12.8333 14H1.16667C1.16667 14 0 14 0 12.8333C0 11.6667 1.16667 8.16667 7 8.16667C12.8333 8.16667 14 11.6667 14 12.8333ZM12.8333 12.8293C12.8316 12.5414 12.6539 11.6789 11.8625 10.8875C11.1016 10.1265 9.67062 9.33333 6.99999 9.33333C4.32936 9.33333 2.89841 10.1265 2.13745 10.8875C1.34605 11.6789 1.16833 12.5414 1.16667 12.8293H12.8333Z" fill="white"></path>
+        </svg>
+        <span class="button-text">Login</span>
+    <!-- <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M5.121 17.804A9 9 0 1118.879 6.196a9 9 0 01-13.758 11.608z" />
+    </svg> -->
+    <!-- <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24"
+      stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+    </svg> -->
+  </button>
+  <ul class="dropdown-menu" id="authDropdownMenu"></ul>
+</div>
+
     <section id="home" class="active">
       <h2>Welcome to A.W.A.R.E.</h2>
       <h3>♻️ Artificial Waste Analysis and Recycling Engine</h3>
@@ -471,15 +533,58 @@ function highlightBin(binName) {
     document.getElementById("viewBinBtn").style.display = "inline-block";
   }
 }
-function goToBinInfo() {
-  if (lastHighlightedBin) {
-    showSection("information");
-    lastHighlightedBin.scrollIntoView({ behavior: "smooth", block: "center" });
+
+const dropdownToggle = document.querySelector(".account-dropdown .dropdown-toggle");
+const dropdownMenu = document.getElementById("authDropdownMenu");
+const dropdownIcon = document.querySelector(".account-dropdown .dropdown-icon");
+
+dropdownToggle?.addEventListener("click", () => {
+  const isOpen = dropdownMenu.style.display === "block";
+  dropdownMenu.style.display = isOpen ? "none" : "block";
+  dropdownIcon.style.transform = isOpen ? "rotate(0deg)" : "rotate(180deg)";
+});
+
+// Close if clicked outside
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".account-dropdown")) {
+    dropdownMenu.style.display = "none";
+    dropdownIcon.style.transform = "rotate(0deg)";
+  }
+});
+
+// Render login/register/logout dynamically
+function updateAuthDropdown() {
+  dropdownMenu.innerHTML = "";
+  if (window.isLoggedIn) {
+    const liLogout = document.createElement("li");
+    liLogout.textContent = "Logout";
+    liLogout.onclick = () => { logoutUser(); dropdownMenu.style.display = "none"; };
+    dropdownMenu.appendChild(liLogout);
   } else {
-    alert("No bin info available yet. Please classify an image first.");
+    const liLogin = document.createElement("li");
+    liLogin.textContent = "Login";
+    liLogin.onclick = () => { showSection("Login"); dropdownMenu.style.display = "none"; };
+    const liRegister = document.createElement("li");
+    liRegister.textContent = "Register";
+    liRegister.onclick = () => { showSection("register"); dropdownMenu.style.display = "none"; };
+    dropdownMenu.appendChild(liLogin);
+    dropdownMenu.appendChild(liRegister);
   }
 }
 
+// Call this inside updateUserIndicator()
+function updateUserIndicator() {
+  if (userIndicator)
+    userIndicator.innerText = window.isLoggedIn
+      ? `✅ Logged in: ${window.currentUsername}`
+      : "❌ Not logged in";
+
+  updateAuthDropdown();
+
+  document.querySelectorAll(".protected").forEach(item => {
+    item.style.display = window.isLoggedIn ? "block" : "none";
+  });
+}
 
   
 
