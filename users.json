@@ -1,6 +1,7 @@
 {
-  "sanskriti": {
-    "email": "sanskriti13887@gmail.com",
-    "password": "scrypt:32768:8:1$Oay1ztLV8hDWkhW8$4092ba61effdd6d62255a8e6ce85fb3076ca0848f278cfc2d058fcafebe8b8cc3ffb1a815c494cb093b6485f94b135e0603a2cdc33038174c236b5eb9fca3bea"
+  
+  "sk": {
+    "email": "s@gmail.com",
+    "password": "scrypt:32768:8:1$WEXSRY5BHNPCDXIN$22556ce99ed153a3507526a6d704d30103eb7feef4e1269bcf8cfb821a7286a8d5760ee7b5f6c0523ac6a2d8c4b8c02ecdccecf2cc93ff7826712f0d444744ab"
   }
 }
