@@ -1,7 +1,6 @@
 {
-  
   "sk": {
-    "email": "s@gmail.com",
-    "password": "scrypt:32768:8:1$WEXSRY5BHNPCDXIN$22556ce99ed153a3507526a6d704d30103eb7feef4e1269bcf8cfb821a7286a8d5760ee7b5f6c0523ac6a2d8c4b8c02ecdccecf2cc93ff7826712f0d444744ab"
+    "email": "124@gmail.com",
+    "password": "scrypt:32768:8:1$8qqCdxHeiYgLl72P$4bd10ebbf297749b2f6c387adebc40bfadc89867f8204fcb89a40d00d743e2268ff0bd18125e96321c9f9bec6bff8c5c224e3b563f3d02fc19093a83e6007b36"
   }
 }
