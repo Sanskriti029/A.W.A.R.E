@@ -58,6 +58,9 @@
     .hamburger { position: fixed; top: 1rem; left: 1rem; cursor: pointer; z-index: 1001; }
     .hamburger span { display:block; width:28px; height:3px; margin:5px; background:black; border-radius:5px; }
 
+
+
+    
     .sidebar {
       position: fixed; left: -250px; top: 0; width: 250px; height: 100%;
       background: #16a085; padding-top: 3rem; transition: 0.3s; z-index: 1000; overflow-y: auto;
@@ -88,8 +91,11 @@
       color: #fff;
       background: rgba(0,0,0,0.15);
       border-bottom: 1px solid rgba(0,0,0,0.1);
-      display: none;
+      
     }
+#userIndicator {
+  display: none;
+}
 
     .protected { display: none; }
 
@@ -125,29 +131,10 @@
 
     /* Account dropdown */
     .account-dropdown {
-  position: absolute;
-  top: 1rem;
-  right: 1.5rem;
-  display: none; /* hidden until login */
-}
-
-#accountIcon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #16a085;
-  color: white;
-  display: flex;          /* visible only after login via JS */
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 16px;
-  cursor: pointer;
-}
-.button-text {
-  display: none; /* hide "Login" text permanently */
-}
-
+      position: absolute;
+      top: 1rem;
+      right: 1.5rem;
+    }
     .account-dropdown .dropdown-toggle {
       background: #16a085;
       color: white;
@@ -180,11 +167,201 @@
     .account-dropdown .dropdown-menu li:hover {
       background: #f4f4f4;
     }
-   
+ #accountIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #16a085;
+  color: white;
+  display: none; /* hidden until login */
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+}
+
+/* Dropdown menu */
+#accountDropdown {
+  display: none;
+  position: absolute;
+  top: 3.5rem; /* below icon */
+  right: 1.5rem;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  list-style: none;
+  padding: 0.5rem 0;
+  margin: 0;
+  min-width: 120px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  z-index: 1000;
+}
+.notifications-panel h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 14px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.3rem;
+  display: none;
+}
+
+.notifications-panel ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+}
+
+.notifications-panel ul li {
+  font-size: 13px;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.notifications-panel ul li:last-child {
+  border-bottom: none;
+}
+
+#accountDropdown li {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+}
+
+#accountDropdown li:hover {
+  background: #f5f5f5;
+}
+#accountIcon, #accountDropdown {
+  display: none;
+}
+
+#leaderboard table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+#leaderboard th, #leaderboard td {
+  padding: 0.8rem;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+}
+#leaderboard th {
+  background-color: #16a085;
+  color: white;
+  border-radius: 6px;
+}
+#leaderboard tbody tr:hover {
+  background-color: #f0f0f0;
+}
+/* 🔔 Toast notifications */
+#toastContainer {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast {
+  background: #16a085;
+  color: white;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  opacity: 0;
+  transform: translateX(100%);
+  transition: all 0.4s ease;
+  max-width: 300px;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast.hide {
+  opacity: 0;
+  transform: translateX(100%);
+}
+/* Pulse animation for new notifications */
+@keyframes pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 rgba(22,160,133, 0.4); }
+  50% { transform: scale(1.2); box-shadow: 0 0 10px rgba(22,160,133, 0.6); }
+  100% { transform: scale(1); box-shadow: 0 0 0 rgba(22,160,133, 0.4); }
+}
+
+.pulse {
+  animation: pulse 0.6s ease-in-out 2;
+}
+/* Modal background */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed;
+  z-index: 2000;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.5);
+  backdrop-filter: blur(2px);
+}
+
+/* Modal content box */
+.modal-content {
+  background: #fff;
+  margin: 10% auto;
+  padding: 20px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  text-align: center;
+  position: relative;
+}
+
+/* Close button */
+.close-btn {
+  position: absolute;
+  top: 10px; right: 15px;
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  cursor: pointer;
+}
+.modal-content {
+  background: #fff;
+  margin: 10% auto;
+  padding: 20px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  text-align: center;
+  position: relative;
+  border-left: 8px solid #16a085; /* Default color, will override in JS */
+}
+.map-embed {
+  margin: 1.5rem 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+}
+.map-embed iframe {
+  width: 100%;
+  height: 450px;
+  border: none;
+  display: block;
+}
 
   </style>
 <body>
-  
+  <div id="appContainer" style="display:none;">
 <!-- Sidebar -->
 <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
 <div class="sidebar" id="sidebar">
@@ -208,47 +385,20 @@
 <div class="main-content">
   <div class="main-title">A.W.A.R.E.</div>
 
-<div class="account-dropdown">
-  <button class="dropdown-toggle" id="accountButton">
-    <span id="accountIcon"> ... </span>
-    <span class="button-text">Login</span>
-  </button>
-  <ul class="dropdown-menu" id="authDropdownMenu"></ul>
+<div id="accountIcon"></div>
+<ul id="accountDropdown" class="account-dropdown">
+  <li id="notificationsBtn">Notifications</li>
+  <li id="logoutBtn">Logout</li>
+</ul>
+
+<!-- Notifications Panel (hidden by default) -->
+<div id="notificationsPanel" class="notifications-panel">
+  <h4>Notifications</h4>
+  <ul id="notificationsList"></ul>
+</div>
+<div id="toastContainer"></div>
 </div>
 
-<!-- <div class="account-dropdown">
-  <button class="dropdown-toggle" id="accountButton">
-    <span id="accountIcon">
-      
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 12c2.21 0 4-1.79 4-4S14.21 4 12 4 8 5.79 8 8s1.79 4 4 4zM12 14c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z"/>
-      </svg>
-    </span>
-    <span class="button-text">Login</span>
-  </button>
-  <ul class="dropdown-menu" id="authDropdownMenu"></ul>
-</div> -->
-
-
-  <!-- <div class="account-dropdown">
-  <button class="dropdown-toggle">
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" class="tnb-sign-in-icon">
-          <path d="M7 7C8.933 7 10.5 5.433 10.5 3.5C10.5 1.567 8.933 0 7 0C5.067 0 3.5 1.567 3.5 3.5C3.5 5.433 5.067 7 7 7ZM9.33333 3.5C9.33333 4.78866 8.28866 5.83333 7 5.83333C5.71134 5.83333 4.66667 4.78866 4.66667 3.5C4.66667 2.21134 5.71134 1.16667 7 1.16667C8.28866 1.16667 9.33333 2.21134 9.33333 3.5Z" fill="white"></path>
-          <path d="M14 12.8333C14 14 12.8333 14 12.8333 14H1.16667C1.16667 14 0 14 0 12.8333C0 11.6667 1.16667 8.16667 7 8.16667C1a2.8333 8.16667 14 11.6667 14 12.8333ZM12.8333 12.8293C12.8316 12.5414 12.6539 11.6789 11.8625 10.8875C11.1016 10.1265 9.67062 9.33333 6.99999 9.33333C4.32936 9.33333 2.89841 10.1265 2.13745 10.8875C1.34605 11.6789 1.16833 12.5414 1.16667 12.8293H12.8333Z" fill="white"></path>
-        </svg>
-        <span class="button-text">Login</span> -->
-    <!-- <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-        d="M5.121 17.804A9 9 0 1118.879 6.196a9 9 0 01-13.758 11.608z" />
-    </svg> -->
-    <!-- <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24"
-      stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-    </svg> -->
-  </button>
-  <ul class="dropdown-menu" id="authDropdownMenu"></ul>
-</div>
-<!-- Home (no longer active by default) -->
 <section id="home">
   <h2>Welcome to A.W.A.R.E.</h2>
   <h3>♻️ Artificial Waste Analysis and Recycling Engine</h3>
@@ -267,17 +417,16 @@
   <p id="loginStatus" style="text-align:center;"></p>
 </section>
 
-
    <section id="classifier">
   <h2>AI Waste Classifier</h2>
   <input type="file" id="imageUpload" accept="image/*">
-  <button id="classifyBtn">Classify Waste</button>
+  <button id="classifyBtn" onclick="classifyImage()">Classify Waste</button>
+
   <p id="result"></p>
   <p id="wasteType"></p>
   <p id="recyclingProcess"></p>
-  <button id="viewBinBtn" style="display:none;" onclick="goToBinInfo()">View Bin Info</button>
+  <button id="viewBinBtn" style="display:none;" >View Bin Info</button>
 </section>
-
 
     <section id="guide">
       <h2>Recycling Guide</h2>
@@ -295,18 +444,21 @@
       </form>
     </section>
 
-    <!-- <section id="Login" class="auth">
-      <h2>Login</h2>
-      <form onsubmit="event.preventDefault(); loginUser();">
-        <input type="text" id="loginUsername" placeholder="Username" required />
-        <input type="password" id="loginPassword" placeholder="Password" required />
-        <button type="submit">Login</button>
-        <p style="text-align:center; margin-top:8px;">Don't have an account? <a href="#register" onclick="showSection('register')">Register</a></p>
-      </form>
-      <p id="loginStatus" style="text-align:center;"></p>
-    </section> -->
-
-    <section id="map-section">
+   <section id="leaderboard">
+  <h2>🏆 Leaderboard</h2>
+  <table id="leaderboardTable">
+    <thead>
+      <tr>
+        <th>Rank</th>
+        <th>User</th>
+        <th>Points</th>
+        <th>Classifications</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+    <!-- <section id="map-section">
       <h2>Nearby Recycling Centers</h2>
       <input type="text" id="locationSearch" placeholder="Enter city or area name">
       <button onclick="searchLocation()">Search Location</button>
@@ -321,7 +473,35 @@
       </select>
       <div id="map"></div>
       <button onclick="findCenters()">Find Recycling Centers</button>
-    </section>
+      
+    </section> -->
+<section id="map-section">
+  <h2>Nearby Recycling Centers</h2>
+  <input type="text" id="locationSearch" placeholder="Enter city or area name">
+  <button onclick="searchLocation()">Search Location</button>
+  <label for="wasteFilter">Filter by Waste Type:</label>
+  <select id="wasteFilter">
+    <option value="general">General</option>
+    <option value="Plastic Waste">Plastic Waste</option>
+    <option value="Paper Waste">Paper Waste</option>
+    <option value="Glass Waste">Glass Waste</option>
+    <option value="Metal Waste">Metal Waste</option>
+    <option value="E-Waste">E-Waste</option>
+  </select>
+
+  <!-- ✅ Google Maps Embed Only -->
+  <div class="map-embed">
+    <iframe 
+      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d234700.90002902807!2d77.24107900392008!3d23.199323871704177!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x397c428f8fd68fbd%3A0x2155716d572d4f8!2sBhopal%2C%20Madhya%20Pradesh!5e0!3m2!1sen!2sin!4v1758211734687!5m2!1sen!2sin" 
+      width="100%" 
+      height="450" 
+      style="border:0;" 
+      allowfullscreen 
+      loading="lazy" 
+      referrerpolicy="no-referrer-when-downgrade">
+    </iframe>
+  </div>
+</section>
 
    <section id="information">
     <h2>♻️ Dustbin Information Guide</h2>
@@ -384,7 +564,7 @@
         <button type="submit">Send Message</button>
       </form>
     </section>
-    <section id="leaderboard"><h2>Leaderboard</h2><p>Coming soon...</p></section>
+    <!-- Removed duplicate leaderboard section to fix id conflict -->
    <section id="about-us">
       <h2>About Us</h2>
       <p> We are a group of eco-conscious developers using AI and data-driven tools to promote
@@ -392,161 +572,175 @@
         for everyone to understand how to manage waste, recyle them for making the future better .</p>
     </section>
 </div>
+<!-- Bin Info Modal -->
+<div id="binModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn">&times;</span>
+    <div id="binModalContent"></div>
+  </div>
+</div>
 
 <script>
-
+  
+  let lastWasteType = null;
 // ✅ Sidebar toggle
 const hamburger = document.getElementById("hamburger");
 const sidebar = document.getElementById("sidebar");
 hamburger?.addEventListener("click", () => sidebar.classList.toggle("open"));
 
-
 // ✅ Sections and menu items
 const sections = document.querySelectorAll("section");
 const menuItems = document.querySelectorAll(".sidebar ul li");
 
-// ✅ Dropdown toggle
-const dropdownToggle = document.querySelector(".account-dropdown .dropdown-toggle");
-const dropdownMenu = document.getElementById("authDropdownMenu");
-const dropdownIcon = document.querySelector(".account-dropdown .dropdown-icon");
-
-dropdownToggle?.addEventListener("click", () => {
-  const isOpen = dropdownMenu.style.display === "block";
-  dropdownMenu.style.display = isOpen ? "none" : "block";
-  if (dropdownIcon) dropdownIcon.style.transform = isOpen ? "rotate(0deg)" : "rotate(180deg)";
-});
-
-// ✅ Account icon (locked/unlocked)
+// ✅ Account icon (initial only after login)
 function updateAccountIcon() {
-  const accountDropdown = document.querySelector(".account-dropdown");
   const accountIcon = document.getElementById("accountIcon");
-  const buttonText = document.querySelector(".button-text");
-
-  if (!accountDropdown || !accountIcon || !buttonText) return;
+  if (!accountIcon) return;
 
   if (window.isLoggedIn && window.currentUsername) {
-    // ✅ Show user initial
     const initial = window.currentUsername.charAt(0).toUpperCase();
-    accountIcon.innerText = initial;
-    buttonText.style.display = "none"; // remove "Login" text
-    accountDropdown.style.display = "block"; // show after login
+    accountIcon.textContent = initial;
+    accountIcon.style.display = "flex"; // show after login
   } else {
-    // ❌ Hide whole button on login page
-    accountDropdown.style.display = "none";
+    accountIcon.style.display = "none"; // hide when logged out
   }
 }
+const binColors = {
+  plastic: "Blue Bin",
+  paper: "Blue Bin",
+  glass: "Blue Bin",
+  organic: "Green Bin",
+  "e-waste": "Red Bin",
+  hazardous: "Red Bin",
+  metal: "Yellow Bin",
+  general: "Black Bin"
+};
 
+const wasteFacts = [
+  "♻️ Recycling one aluminum can saves enough energy to run a TV for 3 hours.",
+  "🌍 Plastic takes up to 500 years to decompose in landfills.",
+  "🍌 Food waste makes up almost 20% of landfills globally.",
+  "📄 Recycling one ton of paper saves 17 trees.",
+  "🔋 Batteries should never go in general waste — they can leak harmful chemicals.",
+  "🪟 Glass is 100% recyclable and can be recycled endlessly without loss of quality.",
+  "Waste isn’t waste until we waste it. – Unknown",
+  "The greatest threat to our planet is the belief that someone else will save it.” – Robert Swan",
+  "We do not inherit the Earth from our ancestors; we borrow it from our children.” – Native American Proverb",
+"When you refuse to reuse, it’s the Earth you abuse. – Unknown",
+ "The Earth is what we all have in common. – Wendell Berry",
+"Less pollution is the best solution. – Unknown",
+"Recycling turns things into other things. Which is like magic. – Unknown",
+"Nature provides a free lunch, but only if we control our appetites. – William Ruckelshaus",
+"There is no such thing as ‘away’. When we throw anything away, it must go somewhere. – Annie Leonard",
+"Small acts, when multiplied by millions of people, can transform the world. – Howard Zinn",
+ "The world generates over 2.1 billion tons of municipal solid waste annually (World Bank, 2022).",
 
+ "At least 33% of waste globally is not managed in an environmentally safe way."
+];
+// ✅ Allow logout by clicking the account icon
+const accountIcon = document.getElementById("accountIcon");
+const accountDropdown = document.getElementById("accountDropdown");
+const logoutBtn = document.getElementById("logoutBtn");
+const notificationsBtn = document.getElementById("notificationsBtn");
+const notificationsPanel = document.getElementById("notificationsPanel");
+const notificationsList = document.getElementById("notificationsList");
 
-
-
-
-
-// ✅ Render login/register/logout dynamically
-function updateAuthDropdown() {
-  dropdownMenu.innerHTML = "";
-
-  const status = document.createElement("li");
-  status.textContent = window.isLoggedIn
-    ? ` Logged in : ${window.currentUsername}`
-    : " Not logged in";
-  status.style.fontWeight = "bold";
-  status.style.cursor = "default";
-  dropdownMenu.appendChild(status);
-
-  // Separator
-  dropdownMenu.appendChild(document.createElement("hr"));
-
-  if (window.isLoggedIn) {
-    const liLogout = document.createElement("li");
-    liLogout.textContent = "Logout";
-    liLogout.onclick = () => { logoutUser(); dropdownMenu.style.display = "none"; };
-    dropdownMenu.appendChild(liLogout);
-  } else {
-    const liLogin = document.createElement("li");
-    liLogin.textContent = "Login";
-    liLogin.onclick = () => { showSection("Login"); dropdownMenu.style.display = "none"; };
-
-    const liRegister = document.createElement("li");
-    liRegister.textContent = "Register";
-    liRegister.onclick = () => { showSection("register"); dropdownMenu.style.display = "none"; };
-
-    dropdownMenu.appendChild(liLogin);
-    dropdownMenu.appendChild(liRegister);
-  }
-}
-
-// ✅ Close dropdown if clicked outside
-document.addEventListener("click", (e) => {
-  if (!e.target.closest(".account-dropdown")) {
-    dropdownMenu.style.display = "none";
-    if (dropdownIcon) dropdownIcon.style.transform = "rotate(0deg)";
-  }
+// Toggle dropdown
+accountIcon?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  accountDropdown.style.display = accountDropdown.style.display === "block" ? "none" : "block";
 });
 
-function updateUserIndicator() {
-  const status = document.getElementById("userIndicator");
-  const authMenu = document.getElementById("authDropdownMenu");
+// Hide dropdown and notifications when clicking outside
+document.addEventListener("click", () => {
+  accountDropdown.style.display = "none";
+  notificationsPanel.style.display = "none";
+});
 
-  if (window.isLoggedIn && window.currentUsername) {
-    // Sidebar user indicator
-    status.textContent = `Logged in as: ${window.currentUsername}`;
+// Logout
+logoutBtn?.addEventListener("click", () => {
+  logoutUser();
+  accountDropdown.style.display = "none";
+});
 
-    // Dropdown menu content
-    authMenu.innerHTML = `
-      <li class="dropdown-header">Logged in as <strong>${window.currentUsername}</strong></li>
-      <li><button onclick="logoutUser()">Logout</button></li>
-    `;
-  } else {
-    status.textContent = "Not logged in";
-    authMenu.innerHTML = `
-      <li><button onclick="openAuthModal('login')">Login</button></li>
-      <li><button onclick="openAuthModal('register')">Register</button></li>
-    `;
-  }
+// Notifications toggle
+notificationsBtn?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  notificationsPanel.style.display = notificationsPanel.style.display === "block" ? "none" : "block";
+});
+function showToast(message) {
+  const container = document.getElementById("toastContainer");
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = message;
 
-  // Always update the icon state
-  updateAccountIcon();
+  container.appendChild(toast);
+
+  // Animate in
+  setTimeout(() => toast.classList.add("show"), 100);
+
+  // Auto remove after 4s
+  setTimeout(() => {
+    toast.classList.remove("show");
+    toast.classList.add("hide");
+    setTimeout(() => toast.remove(), 400);
+  }, 4000);
 }
 
+// Example: Load sample notifications (replace with API later)
+function addNotification(message) {
+  const li = document.createElement("li");
+  li.textContent = message;
+  notificationsList.prepend(li); // newest on top
+
+  // Show toast
+  showToast(message);
+
+  // Pulse the account icon to indicate new notification
+  const accountIcon = document.getElementById("accountIcon");
+  if (accountIcon) {
+    accountIcon.classList.add("pulse");
+
+    // Remove pulse class after animation ends to allow future pulses
+    setTimeout(() => accountIcon.classList.remove("pulse"), 1200); // matches 0.6s x2
+  }
+}
+
+
+
+// Load notifications when user logs in
 function updateUserIndicator() {
   const userIndicator = document.getElementById("userIndicator");
-  const sidebar = document.getElementById("sidebar");
-  const hamburger = document.getElementById("hamburger");
 
   if (window.isLoggedIn && window.currentUsername) {
-    // Show logged-in status
     userIndicator.innerText = `✅ Logged in: ${window.currentUsername}`;
-    
-    // ✅ Show sidebar and hamburger
+
+    // Show sidebar + toggle
     sidebar.style.display = "block";
     hamburger.style.display = "block";
 
-    // ✅ Enable protected items
+    // Show protected items
     document.querySelectorAll(".protected").forEach(item => {
       item.style.display = "block";
     });
-
   } else {
-    // Show not logged in status
     userIndicator.innerText = "❌ Not logged in";
-    
-    // ✅ Hide sidebar and hamburger
+
+    // Hide sidebar + toggle
     sidebar.style.display = "none";
     hamburger.style.display = "none";
 
-    // ✅ Hide protected items
+    // Hide protected items
     document.querySelectorAll(".protected").forEach(item => {
       item.style.display = "none";
     });
   }
 
-  updateAuthDropdown();
-  updateAccountIcon();
+  updateAccountIcon(); // update the initial letter icon
 }
+  
 
-
-// ✅ Features dropdown toggle
+// ✅ Features dropdown toggle (for "Features" inside sidebar)
 const featuresMenu = document.getElementById("featuresMenu");
 if (featuresMenu) {
   const submenu = featuresMenu.querySelector("ul");
@@ -573,8 +767,6 @@ function showSection(sectionId) {
     document.getElementById("Login")?.classList.add("active");
 
     menuItems.forEach(item => item.classList.remove("active"));
-    const loginItem = [...menuItems].find(li => li.getAttribute("onclick")?.includes("Login"));
-    if (loginItem) loginItem.classList.add("active");
     return;
   }
 
@@ -585,30 +777,10 @@ function showSection(sectionId) {
   menuItems.forEach(item => item.classList.remove("active"));
   const activeItem = [...menuItems].find(li => li.getAttribute("onclick")?.includes(sectionId));
   if (activeItem) activeItem.classList.add("active");
+
+  // ✅ Load leaderboard when the section is active
+  if (sectionId === "leaderboard") loadLeaderboard();
 }
-// async function loginUser() {
-//   const username = document.getElementById("loginUsername").value;
-//   const password = document.getElementById("loginPassword").value;
-//   try {
-//     const res = await fetch("/login", {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({ username, password }),
-//       credentials: "include"
-//     });
-//     const data = await res.json();
-//     if (res.ok) {
-//       window.isLoggedIn = true;
-//       window.currentUsername = data.username;
-//       updateUserIndicator();
-//       showSection("home");
-
-//       // ✅ Auto-open sidebar after login
-//       document.getElementById("sidebar").classList.add("open");
-
-//     } else alert("❌ " + (data.error || "Login failed"));
-//   } catch (err) { alert("Error: " + err.message); }
-// }
 
 // --- AUTH ---
 async function registerUser() {
@@ -623,7 +795,6 @@ async function registerUser() {
     });
     const data = await res.json();
     if (res.ok) {
-      // alert("✅ Registration successful. Please log in.");
       showSection("Login");
     } else alert("❌ " + (data.error || "Registration failed"));
   } catch (err) { alert("Error: " + err.message); }
@@ -645,14 +816,10 @@ async function loginUser() {
       window.currentUsername = data.username;
       updateUserIndicator();
       showSection("home");
-
-      // ✅ Auto-open sidebar after login
       document.getElementById("sidebar").classList.add("open");
-
     } else alert("❌ " + (data.error || "Login failed"));
   } catch (err) { alert("Error: " + err.message); }
 }
-
 
 async function logoutUser() {
   try {
@@ -662,12 +829,8 @@ async function logoutUser() {
       window.currentUsername = "";
       updateUserIndicator();
 
-      // ✅ Hide sidebar completely
-      const sidebar = document.getElementById("sidebar");
       sidebar.classList.remove("open");
       sidebar.style.display = "none";
-
-      // ✅ Redirect to Login page
       showSection("Login");
     } else {
       alert("❌ Logout failed");
@@ -677,7 +840,6 @@ async function logoutUser() {
   }
 }
 
-
 async function checkAuth() {
   try {
     const res = await fetch("/check-auth", { credentials: "include" });
@@ -685,11 +847,11 @@ async function checkAuth() {
     if (res.ok && data.loggedIn) {
       window.isLoggedIn = true;
       window.currentUsername = data.username;
-      showSection("home"); // ✅ redirect to home if already logged in
+      showSection("home");
     } else {
       window.isLoggedIn = false;
       window.currentUsername = "";
-      showSection("Login"); // ✅ force login page if not logged in
+      showSection("Login");
     }
   } catch {
     window.isLoggedIn = false;
@@ -698,56 +860,17 @@ async function checkAuth() {
   updateUserIndicator();
 }
 
-window.addEventListener("load", checkAuth);
-
-// --- CLASSIFIER ---
-let lastWasteType = "general";
-async function classifyImage() {
-  if (!window.isLoggedIn) { alert("⚠️ Please log in first."); showSection("Login"); return; }
-  const fileInput = document.getElementById("imageUpload");
-  const out = document.getElementById("result");
-  const wasteType = document.getElementById("wasteType");
-  const recyclingProcess = document.getElementById("recyclingProcess");
-  const classifyBtn = document.getElementById("classifyBtn");
-  if (!fileInput.files.length) { out.innerText = "Please upload an image."; return; }
-  classifyBtn.disabled = true; classifyBtn.textContent = "Classifying...";
-  out.innerText = "Classifying...";
-  const formData = new FormData(); formData.append("file", fileInput.files[0]);
-  try {
-    const response = await fetch("/predict", { method: "POST", body: formData, credentials: "include" });
-    const data = await response.json();
-    if (response.ok) {
-      out.innerHTML = `Detected Waste Category: <strong>${data.prediction}</strong>`;
-      wasteType.innerHTML = `Waste Type: <strong>${data.waste_type}</strong>`;
-      recyclingProcess.innerHTML = `Recycling Process: <strong>${data.recycling_process}</strong>`;
-      lastWasteType = data.waste_type;
-      highlightBin(data.dustbin);
-    } else out.innerText = "Error: " + (data.error || "Failed");
-  } catch (err) { out.innerText = "Error: " + err.message; }
-  finally { classifyBtn.disabled = false; classifyBtn.textContent = "Classify Waste"; }
-}
-document.getElementById("classifyBtn")?.addEventListener("click", e => { e.preventDefault(); classifyImage(); });
-
-let lastHighlightedBin = null;
-function highlightBin(binName) {
-  document.querySelectorAll(".bin-card").forEach(card => card.classList.remove("highlight"));
-  let target = null;
-  document.querySelectorAll(".bin-card h3").forEach(h3 => {
-    if (h3.textContent.includes(binName)) {
-      target = h3.closest(".bin-card");
-    }
-  });
-  if (target) {
-    target.classList.add("highlight");
-    lastHighlightedBin = target;
-    document.getElementById("viewBinBtn").style.display = "inline-block";
-  }
-}
+window.addEventListener("load", async () => {
+  await checkAuth(); // sets window.isLoggedIn and currentUsername
+  document.getElementById("appContainer").style.display = "block"; // show content only after auth check
+});
 
 // --- GUIDE ---
 function searchMaterial(query) {
   const guideList = document.getElementById("guideList");
-  const tips = { plastic: "Recycle bottles", glass: "Separate by color", metal: "Aluminium is recyclable", organic: "Compostable", paper: "Recycle clean paper", battery: "Take to recycling center" };
+  const tips = { plastic: "Recycle bottles", glass: "Separate by color", metal: "Aluminium is recyclable", organic: "Compostable", paper: "Recycle clean paper", battery: "Take to recycling center", organic: "Plant and animal materials that can decompose.", recyclable: "Materials that can be reprocessed into new products.", hazardous: "Dangerous, toxic materials like batteries and chemicals." };
+
+
   guideList.innerHTML = "";
   if (query.trim() !== "") Object.keys(tips).forEach(k => {
     if (k.includes(query.toLowerCase())) {
@@ -760,50 +883,273 @@ function searchMaterial(query) {
 
 // --- MAP ---
 var map = L.map('map').setView([20.5937, 78.9629], 5);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
-    let markers = [];
-    function clearMarkers() { markers.forEach(m => map.removeLayer(m)); markers = []; }
-    function addMarker(lat, lon, popup) { const m = L.marker([lat, lon]).addTo(map).bindPopup(popup); markers.push(m); }
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+let markers = [];
+function clearMarkers() { markers.forEach(m => map.removeLayer(m)); markers = []; }
+function addMarker(lat, lon, popup) { const m = L.marker([lat, lon]).addTo(map).bindPopup(popup); markers.push(m); }
 
-    async function findCenters() {
-      if (!window.isLoggedIn) { alert("Login to find centers."); showSection("Login"); return; }
-      clearMarkers();
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(async pos => {
-          const { latitude, longitude } = pos.coords;
-          map.setView([latitude, longitude], 13);
-          addMarker(latitude, longitude, "📍 You are here");
-          const filterType = document.getElementById("wasteFilter").value || lastWasteType;
-          try {
-            const res = await fetch(`/nearby?lat=${latitude}&lon=${longitude}&type=${encodeURIComponent(filterType)}`, { credentials: "include" });
-            const data = await res.json();
-            if (res.ok && data.centers) data.centers.forEach(c => addMarker(c.lat, c.lon, `<b>${c.name}</b><br>Type: ${c.type}`));
-            else alert(data.error || "No centers found");
-          } catch (err) { alert("Error: " + err.message); }
-        });
-      } else alert("Geolocation not supported by your browser.");
-    }
-
-    async function searchLocation() {
-      const query = document.getElementById("locationSearch").value;
-      if (!query.trim()) return;
-      clearMarkers();
+async function findCenters() {
+  if (!window.isLoggedIn) { alert("Login to find centers."); showSection("Login"); return; }
+  clearMarkers();
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const { latitude, longitude } = pos.coords;
+      map.setView([latitude, longitude], 13);
+      addMarker(latitude, longitude, "📍 You are here");
+      const filterType = document.getElementById("wasteFilter").value || lastWasteType;
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+        const res = await fetch(`/nearby?lat=${latitude}&lon=${longitude}&type=${encodeURIComponent(filterType)}`, { credentials: "include" });
         const data = await res.json();
-        if (data.length > 0) {
-          const { lat, lon } = data[0];
-          const latf = parseFloat(lat), lonf = parseFloat(lon);
-          map.setView([latf, lonf], 13);
-          addMarker(latf, lonf, `📍 ${query}`);
-          if (!window.isLoggedIn) { alert("Log in to fetch recycling centers for this location."); showSection("Login"); return; }
-          const res2 = await fetch(`/nearby?lat=${latf}&lon=${lonf}&type=${encodeURIComponent(document.getElementById("wasteFilter").value || "general")}`, { credentials: "include" });
-          const data2 = await res2.json();
-          if (res2.ok && data2.centers) data2.centers.forEach(c => addMarker(c.lat, c.lon, `<b>${c.name}</b><br>Type: ${c.type}`));
-          else alert(data2.error || "No centers found");
-        } else alert("Location not found");
-      } catch (err) { alert("Geocoding error: " + err.message); }
+        if (res.ok && data.centers) data.centers.forEach(c => addMarker(c.lat, c.lon, `<b>${c.name}</b><br>Type: ${c.type}`));
+        else alert(data.error || "No centers found");
+      } catch (err) { alert("Error: " + err.message); }
+    });
+  } else alert("Geolocation not supported by your browser.");
+}
+
+async function searchLocation() {
+  const query = document.getElementById("locationSearch").value;
+  if (!query.trim()) return;
+  clearMarkers();
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+    const data = await res.json();
+    if (data.length > 0) {
+      const { lat, lon } = data[0];
+      const latf = parseFloat(lat), lonf = parseFloat(lon);
+      map.setView([latf, lonf], 13);
+      addMarker(latf, lonf, `📍 ${query}`);
+      if (!window.isLoggedIn) { alert("Log in to fetch recycling centers for this location."); showSection("Login"); return; }
+      const res2 = await fetch(`/nearby?lat=${latf}&lon=${lonf}&type=${encodeURIComponent(document.getElementById("wasteFilter").value || "general")}`, { credentials: "include" });
+      const data2 = await res2.json();
+      if (res2.ok && data2.centers) data2.centers.forEach(c => addMarker(c.lat, c.lon, `<b>${c.name}</b><br>Type: ${c.type}`));
+      else alert(data2.error || "No centers found");
+    } else alert("Location not found");
+  } catch (err) { alert("Geocoding error: " + err.message); }
+}
+
+//======================//
+//classsifier
+// Global
+
+
+
+// let lastWasteType = "general";
+async function classifyImage() {
+  if (!window.isLoggedIn) { 
+    alert("⚠️ Please log in first."); 
+    showSection("Login"); 
+    return; 
+  }
+
+  const fileInput = document.getElementById("imageUpload");
+  const out = document.getElementById("result");
+  const wasteType = document.getElementById("wasteType");
+  const recyclingProcess = document.getElementById("recyclingProcess");
+  const classifyBtn = document.getElementById("classifyBtn");
+
+  if (!fileInput.files.length) { 
+    out.innerText = "Please upload an image."; 
+    return; 
+  }
+
+  classifyBtn.disabled = true; 
+  classifyBtn.textContent = "Classifying...";
+  out.innerText = "Classifying...";
+
+  const formData = new FormData(); 
+  formData.append("file", fileInput.files[0]);
+
+  try {
+    const response = await fetch("/predict", { method: "POST", body: formData, credentials: "include" });
+    const data = await response.json();
+
+    if (response.ok) {
+      out.innerHTML = `Detected Waste Category: <strong>${data.prediction}</strong>`;
+      wasteType.innerHTML = `Waste Type: <strong>${data.waste_type}</strong>`;
+
+      // 🔑 Get bin color instead of recycling process
+      const binName = data.dustbin?.toLowerCase() || "general";
+      const binColor = binColors[binName] || "Black Bin";
+
+      recyclingProcess.innerHTML = `Recycling Process: <strong>Recycle in ${binColor}</strong>`;
+
+      lastWasteType = (typeof data.waste_type === "string" && data.waste_type.trim() !== "") ? data.waste_type : "general";
+
+      highlightBin(data.dustbin);
+
+      // 🔔 Add notification with random waste fact
+      const randomFact = wasteFacts[Math.floor(Math.random() * wasteFacts.length)];
+      addNotification(randomFact);
+
+    } else {
+      out.innerText = "Error: " + (data.error || "Failed");
+      highlightBin(null);
     }
+  } catch (err) {
+    out.innerText = "Error: " + err.message;
+    highlightBin(null);
+  } finally { 
+    classifyBtn.disabled = false; 
+    classifyBtn.textContent = "Classify Waste"; 
+  }
+}
+function handleClassifyBtnClick(e) {
+  if (e) e.preventDefault();
+  classifyImage();
+}
+
+function highlightBin(binName) {
+  document.querySelectorAll(".bin-card").forEach(card => card.classList.remove("highlight"));
+  let target = null;
+  document.querySelectorAll(".bin-card h3").forEach(h3 => {
+    if (binName && h3.textContent.toLowerCase().includes(binName.toLowerCase())) {
+      target = h3.closest(".bin-card");
+    }
+  });
+  if (target) {
+    target.classList.add("highlight");
+    document.getElementById("viewBinBtn").style.display = "inline-block";
+  } else {
+    document.getElementById("viewBinBtn").style.display = "none";
+  }
+}
+// / Attach event listener to classify button
+document.getElementById("classifyBtn")?.addEventListener("click", handleClassifyBtnClick);
+
+const binModal = document.getElementById("binModal");
+const binModalContent = document.getElementById("binModalContent");
+const binCloseBtn = document.querySelector(".close-btn");
+
+function goToBinInfo() {
+  if (!lastWasteType) {
+    binModalContent.innerHTML = `
+      <h2 style="color:#555;">No Classification Yet</h2>
+      <p>Please classify an item first to see detailed bin information.</p>
+    `;
+    binModal.style.display = "block";
+    return;
+  }
+
+  // Find the matching bin card
+  let targetBin = null;
+  document.querySelectorAll(".bin-card").forEach(card => {
+    if (card.querySelector("h3").textContent.toLowerCase().includes(lastWasteType.toLowerCase())) {
+      targetBin = card;
+    }
+  });
+
+  if (!targetBin) {
+    binModalContent.innerHTML = `
+      <h2 style="color:#e74c3c;">Oops!</h2>
+      <p>No bin information found for <strong>${lastWasteType}</strong>.</p>
+    `;
+    binModal.style.display = "block";
+    return;
+  }
+
+  // Extract bin info
+  const borderColor = targetBin.style.borderLeftColor || getComputedStyle(targetBin).borderLeftColor || "#16a085";
+  const title = targetBin.querySelector("h3").textContent;
+  const description = targetBin.querySelector("p").textContent;
+  const imgSrc = targetBin.querySelector("img")?.src || "";
+
+  // Build modal content with dustbin usage
+  binModalContent.innerHTML = `
+    <h2 style="color:${borderColor}; margin-bottom:10px;">${title}</h2>
+    <img src="${imgSrc}" alt="${title}" style="width:80px; margin:10px 0;">
+    <p>${description}</p>
+    <p style="margin-top:15px; font-weight:bold; color:${borderColor};">
+      ✅ Please use the <span style="text-transform:capitalize;">${title}</span> for recycling.
+    </p>
+  `;
+
+  // Apply styling to modal
+  const modalBox = binModal.querySelector(".modal-content");
+  if (modalBox) {
+    modalBox.style.borderLeftColor = borderColor;
+    modalBox.style.boxShadow = `0 5px 15px ${borderColor}44`;
+  }
+
+  binModal.style.display = "block";
+}
+
+// Close modal on X click
+if (binCloseBtn) binCloseBtn.onclick = () => binModal.style.display = "none";
+
+// Close modal on outside click
+window.addEventListener("click", (event) => {
+  if (event.target === binModal) binModal.style.display = "none";
+});
+
+document.getElementById("viewBinBtn")?.addEventListener("click", goToBinInfo);
+//============================//
+//leaderboard
+async function loadLeaderboard() {
+  const tbody = document.getElementById("leaderboardTable").querySelector("tbody");
+  tbody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
+
+  try {
+    const res = await fetch("/api/leaderboard", { credentials: "include" });
+    const data = await res.json();
+    tbody.innerHTML = "";
+    data.forEach(user => {
+      const row = `<tr>
+                     <td>${user.rank}</td>
+                     <td>${user.username}</td>
+                     <td>${user.points}</td>
+                     <td>${user.correct_classifications}</td>
+                   </tr>`;
+      tbody.innerHTML += row;
+    });
+  } catch(err) {
+    tbody.innerHTML = `<tr><td colspan='4'>Error loading leaderboard</td></tr>`;
+  }
+}
+
+// Call this when user opens leaderboard section
+document.querySelector("li[onclick*='leaderboard']").addEventListener("click", loadLeaderboard);
+function calculatePoints(wasteType) {
+    switch(wasteType.toLowerCase()) {
+        case "plastic waste": return 10;
+        case "paper waste": return 10;
+        case "organic waste": return 5;
+        case "e-waste": return 20;
+        case "hazardous waste": return 20;
+        default: return 5;
+    }
+}
+
+// Call backend to update points after classification
+async function updatePointsBackend(username, wasteType) {
+    const points = calculatePoints(wasteType);
+    await fetch("/api/update-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, points }),
+        credentials: "include"
+    });
+}
+
+
+// Function to show a random waste fact every interval
+function startWasteFactNotifications(interval = 30000) { // 30,000ms = 30s
+  setInterval(() => {
+    const randomFact = wasteFacts[Math.floor(Math.random() * wasteFacts.length)];
+    addNotification(randomFact);
+  }, interval);
+}
+
+// Call this after user logs in
+window.addEventListener("load", () => {
+  if (window.isLoggedIn) {
+    startWasteFactNotifications(30000); // every 30s
+  }
+});
+
 </script>
+
+
+
 </body>
 </html>
