@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>A.W.A.R.E - Waste Classifier</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Montserrat', Arial, sans-serif;
+      background: #ebf6f5;
+      color: #2c3e50;
+      overflow-x: hidden;
+    }
+
+    h2 { margin-bottom: 1rem; color: #16a085; text-align: center; }
+
+    button {
+      background: #16a085;
+      color: white;
+      border: none;
+      padding: 0.7rem 1.4rem;
+      margin-top: 0.5rem;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s ease;
+      display: inline-block;
+    }
+    button:hover { background: #13856e; }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 0.7rem;
+      margin: 0.5rem 0;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+    textarea { resize: vertical; }
+
+    section {
+      background: white;
+      padding: 2rem;
+      margin: 2rem auto;
+      width: 90%;
+      max-width: 800px;
+      border-radius: 20px;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    section.active { display: block; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(10px);} to {opacity:1; transform:none;} }
+
+    /* Sidebar */
+    .hamburger { position: fixed; top: 1rem; left: 1rem; cursor: pointer; z-index: 1001; }
+    .hamburger span { display:block; width:28px; height:3px; margin:5px; background:black; border-radius:5px; }
+
+    .sidebar {
+      position: fixed; left: -250px; top: 0; width: 250px; height: 100%;
+      background: #16a085; padding-top: 3rem; transition: 0.3s; z-index: 1000; overflow-y: auto;
+       display: none; /* ✅ hide by default */
+    }
+    .sidebar.open { left: 0; }
+    .sidebar ul { list-style: none; padding: 0; margin: 0; }
+    .sidebar ul li {
+      padding: 1rem 1.8rem;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar ul li:hover, .sidebar ul li.active {
+      background: #13856e;
+      padding-left: 2.1rem;
+    }
+    .sidebar ul ul { display: none; padding-left: 1rem; background: #1abc9c; }
+    .sidebar ul ul li { font-weight: 500; }
+
+    #userIndicator {
+      padding: 1rem 1.2rem;
+      font-weight: 600;
+      color: #fff;
+      background: rgba(0,0,0,0.15);
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+      display: none;
+    }
+
+    .protected { display: none; }
+
+    .main-content { margin: 2rem auto; max-width: 1000px; padding: 2rem; }
+    .main-title { font-size: 2.2rem; text-align: center; font-weight: bold; color: #13856e; margin-bottom: 1.5rem; }
+
+    #map { height: 400px; width: 100%; border-radius: 1rem; box-shadow: 0 5px 12px rgba(0,0,0,0.15); }
+
+    .auth form { display:flex; flex-direction:column; gap:0.5rem; }
+    .auth form button { margin-top:1rem; }
+
+    @media (max-width: 768px) {
+      .main-content { padding:1rem; }
+      section { padding:1.2rem; margin:1.2rem auto; }
+      .main-title { font-size: 1.7rem; }
+    }
+
+    /* Info page */
+    .bin-info { display: grid; gap: 1.2rem; margin-top: 1.5rem; }
+    .bin-card {
+      display: flex; align-items: center; gap: 1rem;
+      background: #fdfdfd; padding: 1rem 1.5rem;
+      border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    .bin-card img { width: 70px; height: 70px; object-fit: contain; }
+    .bin-card:hover { transform: translateY(-4px); box-shadow: 0 6px 14px rgba(0,0,0,0.15); }
+    .bin-card.highlight {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 18px rgba(22,160,133,0.18);
+      border-left-width: 12px !important;
+    }
+
+    /* Account dropdown */
+    .account-dropdown {
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  display: none; /* hidden until login */
+}
+
+#accountIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #16a085;
+  color: white;
+  display: flex;          /* visible only after login via JS */
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+}
+.button-text {
+  display: none; /* hide "Login" text permanently */
+}
+
+    .account-dropdown .dropdown-toggle {
+      background: #16a085;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .account-dropdown .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 120%;
+      right: 0;
+      background: white;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+      border-radius: 8px;
+      list-style: none;
+      margin: 0;
+      padding: 0.5rem 0;
+      min-width: 140px;
+      z-index: 999;
+    }
+    .account-dropdown .dropdown-menu li {
+      padding: 0.6rem 1rem;
+      cursor: pointer;
+    }
+    .account-dropdown .dropdown-menu li:hover {
+      background: #f4f4f4;
+    }
+   
+
+  </style>
+<body>
+  
+<!-- Sidebar -->
+<div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+<div class="sidebar" id="sidebar">
+  <div id="userIndicator">Not logged in</div>
+  <ul>
+    <li onclick="showSection('home')">🏠 Home</li>
+    <li id="featuresMenu" class="protected">✨ Features
+      <ul>
+        <li class="protected" onclick="showSection('classifier')">AI Classifier</li>
+        <li class="protected" onclick="showSection('guide')">Recycling Guide</li>
+        <li class="protected" onclick="showSection('leaderboard')">Leaderboard</li>
+      </ul>
+    </li>
+    <li class="protected" onclick="showSection('map-section')">🗺 Map</li>
+    <li class="protected" onclick="showSection('information')">ℹ️ Information</li>
+    <li onclick="showSection('about-us')">👥 About Us</li>
+    <li onclick="showSection('contact-us')">📩 Contact Us</li>
+  </ul>
+</div>
+
+<div class="main-content">
+  <div class="main-title">A.W.A.R.E.</div>
+
+<div class="account-dropdown">
+  <button class="dropdown-toggle" id="accountButton">
+    <span id="accountIcon"> ... </span>
+    <span class="button-text">Login</span>
+  </button>
+  <ul class="dropdown-menu" id="authDropdownMenu"></ul>
+</div>
+
+<!-- <div class="account-dropdown">
+  <button class="dropdown-toggle" id="accountButton">
+    <span id="accountIcon">
+      
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 12c2.21 0 4-1.79 4-4S14.21 4 12 4 8 5.79 8 8s1.79 4 4 4zM12 14c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z"/>
+      </svg>
+    </span>
+    <span class="button-text">Login</span>
+  </button>
+  <ul class="dropdown-menu" id="authDropdownMenu"></ul>
+</div> -->
+
+
+  <!-- <div class="account-dropdown">
+  <button class="dropdown-toggle">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" class="tnb-sign-in-icon">
+          <path d="M7 7C8.933 7 10.5 5.433 10.5 3.5C10.5 1.567 8.933 0 7 0C5.067 0 3.5 1.567 3.5 3.5C3.5 5.433 5.067 7 7 7ZM9.33333 3.5C9.33333 4.78866 8.28866 5.83333 7 5.83333C5.71134 5.83333 4.66667 4.78866 4.66667 3.5C4.66667 2.21134 5.71134 1.16667 7 1.16667C8.28866 1.16667 9.33333 2.21134 9.33333 3.5Z" fill="white"></path>
+          <path d="M14 12.8333C14 14 12.8333 14 12.8333 14H1.16667C1.16667 14 0 14 0 12.8333C0 11.6667 1.16667 8.16667 7 8.16667C1a2.8333 8.16667 14 11.6667 14 12.8333ZM12.8333 12.8293C12.8316 12.5414 12.6539 11.6789 11.8625 10.8875C11.1016 10.1265 9.67062 9.33333 6.99999 9.33333C4.32936 9.33333 2.89841 10.1265 2.13745 10.8875C1.34605 11.6789 1.16833 12.5414 1.16667 12.8293H12.8333Z" fill="white"></path>
+        </svg>
+        <span class="button-text">Login</span> -->
+    <!-- <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M5.121 17.804A9 9 0 1118.879 6.196a9 9 0 01-13.758 11.608z" />
+    </svg> -->
+    <!-- <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24"
+      stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+    </svg> -->
+  </button>
+  <ul class="dropdown-menu" id="authDropdownMenu"></ul>
+</div>
+<!-- Home (no longer active by default) -->
+<section id="home">
+  <h2>Welcome to A.W.A.R.E.</h2>
+  <h3>♻️ Artificial Waste Analysis and Recycling Engine</h3>
+  <p>AI-powered platform to classify waste, guide recycling, and locate recycling centers.</p>
+</section>
+
+<!-- Login (make this active by default) -->
+<section id="Login" class="auth active">
+  <h2>Login</h2>
+  <form onsubmit="event.preventDefault(); loginUser();">
+    <input type="text" id="loginUsername" placeholder="Username" required />
+    <input type="password" id="loginPassword" placeholder="Password" required />
+    <button type="submit">Login</button>
+    <p style="text-align:center; margin-top:8px;">Don't have an account? <a href="#register" onclick="showSection('register')">Register</a></p>
+  </form>
+  <p id="loginStatus" style="text-align:center;"></p>
+</section>
+
+
+   <section id="classifier">
+  <h2>AI Waste Classifier</h2>
+  <input type="file" id="imageUpload" accept="image/*">
+  <button id="classifyBtn">Classify Waste</button>
+  <p id="result"></p>
+  <p id="wasteType"></p>
+  <p id="recyclingProcess"></p>
+  <button id="viewBinBtn" style="display:none;" onclick="goToBinInfo()">View Bin Info</button>
+</section>
+
+
+    <section id="guide">
+      <h2>Recycling Guide</h2>
+      <input type="text" placeholder="Enter material..." onkeyup="searchMaterial(this.value)">
+      <ul id="guideList"></ul>
+    </section>
+
+    <section id="register" class="auth">
+      <h2>Register</h2>
+      <form onsubmit="event.preventDefault(); registerUser();">
+        <input type="text" id="regUsername" placeholder="Username" required />
+        <input type="email" id="regEmail" placeholder="Email" required />
+        <input type="password" id="regPassword" placeholder="Password" required />
+        <button type="submit">Register</button>
+      </form>
+    </section>
+
+    <!-- <section id="Login" class="auth">
+      <h2>Login</h2>
+      <form onsubmit="event.preventDefault(); loginUser();">
+        <input type="text" id="loginUsername" placeholder="Username" required />
+        <input type="password" id="loginPassword" placeholder="Password" required />
+        <button type="submit">Login</button>
+        <p style="text-align:center; margin-top:8px;">Don't have an account? <a href="#register" onclick="showSection('register')">Register</a></p>
+      </form>
+      <p id="loginStatus" style="text-align:center;"></p>
+    </section> -->
+
+    <section id="map-section">
+      <h2>Nearby Recycling Centers</h2>
+      <input type="text" id="locationSearch" placeholder="Enter city or area name">
+      <button onclick="searchLocation()">Search Location</button>
+      <label for="wasteFilter">Filter by Waste Type:</label>
+      <select id="wasteFilter">
+        <option value="general">General</option>
+        <option value="Plastic Waste">Plastic Waste</option>
+        <option value="Paper Waste">Paper Waste</option>
+        <option value="Glass Waste">Glass Waste</option>
+        <option value="Metal Waste">Metal Waste</option>
+        <option value="E-Waste">E-Waste</option>
+      </select>
+      <div id="map"></div>
+      <button onclick="findCenters()">Find Recycling Centers</button>
+    </section>
+
+   <section id="information">
+    <h2>♻️ Dustbin Information Guide</h2>
+    <p>Different colored bins are used for proper waste segregation. Here’s a quick guide:</p>
+    <div class="bin-info">
+      <div class="bin-card" style="border-left:8px solid blue;">
+        <img src="{{ url_for('static', filename='images/blue-bin.png') }}" alt="Blue Bin">
+        <div>
+          <h3>Blue Bin – <span style="color:blue;">Recyclables</span></h3>
+          <p>For <b>Plastic, Glass, Metal, and Paper</b> that can be recycled. Avoid food-stained or wet waste.</p>
+        </div>
+      </div>
+      <div class="bin-card" style="border-left:8px solid green;">
+        <img src="{{ url_for('static', filename='images/green-bin.png') }}" alt="Green Bin">
+        <div>
+          <h3>Green Bin – <span style="color:green;">Biodegradable Waste</span></h3>
+          <p>For <b>Organic waste</b> like vegetable peels, food scraps, garden waste. Used for composting.</p>
+        </div>
+      </div>
+      <div class="bin-card" style="border-left:8px solid black;">
+        <img src="{{ url_for('static', filename='images/black-bin.png') }}" alt="Black Bin">
+        <div>
+          <h3>Black Bin – <span style="color:black;">Non-Recyclables</span></h3>
+          <p>For <b>Domestic hazardous & non-recyclable items</b> like sanitary waste, dust, ceramics.</p>
+        </div>
+      </div>
+      <div class="bin-card" style="border-left:8px solid red;">
+        <img src="{{ url_for('static', filename='images/red-bin.png') }}" alt="Red Bin">
+        <div>
+          <h3>Red Bin – <span style="color:red;">E-Waste & Hazardous</span></h3>
+          <p>For <b>Batteries, electronics, medical waste</b>. Should be sent to special facilities.</p>
+        </div>
+      </div>
+      <div class="bin-card" style="border-left:8px solid brown;">
+        <img src="{{ url_for('static', filename='images/brown-bin.png') }}" alt="Brown Bin">
+        <div>
+          <h3>Brown Bin – <span style="color:brown;">Organic Waste</span></h3>
+          <p>For <b>Kitchen scraps</b>, used tea leaves, small amounts of garden waste. Ideal for composting at home.
+          </p>
+        </div>
+      </div>
+      <div class="bin-card" style="border-left:8px solid yellow;">
+        <img src="{{ url_for('static', filename='images/yellow-bin.png') }}" alt="Yellow Bin">
+        <div>
+          <h3>Yellow Bin – <span style="color:goldenrod;">Metal Waste</span></h3>
+          <p>For <b>Cans, foils, tins, and other metallic items</b> to be recycled separately.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+    </section>
+
+     <section id="contact-us">
+      <h2>Contact Us</h2>
+      <p>Reach us at <strong>support@aware.com</strong></p>
+      <form onsubmit="event.preventDefault(); alert('Message sent!');">
+        <input type="text" placeholder="Name" required>
+        <input type="email" placeholder="Email" required>
+        <textarea placeholder="Message" required></textarea>
+        <button type="submit">Send Message</button>
+      </form>
+    </section>
+    <section id="leaderboard"><h2>Leaderboard</h2><p>Coming soon...</p></section>
+   <section id="about-us">
+      <h2>About Us</h2>
+      <p> We are a group of eco-conscious developers using AI and data-driven tools to promote
+        recycling, sustainable living, and environmental awareness. Our mission is to make it easy
+        for everyone to understand how to manage waste, recyle them for making the future better .</p>
+    </section>
+</div>
+
+<script>
+
+// ✅ Sidebar toggle
+const hamburger = document.getElementById("hamburger");
+const sidebar = document.getElementById("sidebar");
+hamburger?.addEventListener("click", () => sidebar.classList.toggle("open"));
+
+
+// ✅ Sections and menu items
+const sections = document.querySelectorAll("section");
+const menuItems = document.querySelectorAll(".sidebar ul li");
+
+// ✅ Dropdown toggle
+const dropdownToggle = document.querySelector(".account-dropdown .dropdown-toggle");
+const dropdownMenu = document.getElementById("authDropdownMenu");
+const dropdownIcon = document.querySelector(".account-dropdown .dropdown-icon");
+
+dropdownToggle?.addEventListener("click", () => {
+  const isOpen = dropdownMenu.style.display === "block";
+  dropdownMenu.style.display = isOpen ? "none" : "block";
+  if (dropdownIcon) dropdownIcon.style.transform = isOpen ? "rotate(0deg)" : "rotate(180deg)";
+});
+
+// ✅ Account icon (locked/unlocked)
+function updateAccountIcon() {
+  const accountDropdown = document.querySelector(".account-dropdown");
+  const accountIcon = document.getElementById("accountIcon");
+  const buttonText = document.querySelector(".button-text");
+
+  if (!accountDropdown || !accountIcon || !buttonText) return;
+
+  if (window.isLoggedIn && window.currentUsername) {
+    // ✅ Show user initial
+    const initial = window.currentUsername.charAt(0).toUpperCase();
+    accountIcon.innerText = initial;
+    buttonText.style.display = "none"; // remove "Login" text
+    accountDropdown.style.display = "block"; // show after login
+  } else {
+    // ❌ Hide whole button on login page
+    accountDropdown.style.display = "none";
+  }
+}
+
+
+
+
+
+
+
+// ✅ Render login/register/logout dynamically
+function updateAuthDropdown() {
+  dropdownMenu.innerHTML = "";
+
+  const status = document.createElement("li");
+  status.textContent = window.isLoggedIn
+    ? ` Logged in : ${window.currentUsername}`
+    : " Not logged in";
+  status.style.fontWeight = "bold";
+  status.style.cursor = "default";
+  dropdownMenu.appendChild(status);
+
+  // Separator
+  dropdownMenu.appendChild(document.createElement("hr"));
+
+  if (window.isLoggedIn) {
+    const liLogout = document.createElement("li");
+    liLogout.textContent = "Logout";
+    liLogout.onclick = () => { logoutUser(); dropdownMenu.style.display = "none"; };
+    dropdownMenu.appendChild(liLogout);
+  } else {
+    const liLogin = document.createElement("li");
+    liLogin.textContent = "Login";
+    liLogin.onclick = () => { showSection("Login"); dropdownMenu.style.display = "none"; };
+
+    const liRegister = document.createElement("li");
+    liRegister.textContent = "Register";
+    liRegister.onclick = () => { showSection("register"); dropdownMenu.style.display = "none"; };
+
+    dropdownMenu.appendChild(liLogin);
+    dropdownMenu.appendChild(liRegister);
+  }
+}
+
+// ✅ Close dropdown if clicked outside
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".account-dropdown")) {
+    dropdownMenu.style.display = "none";
+    if (dropdownIcon) dropdownIcon.style.transform = "rotate(0deg)";
+  }
+});
+
+function updateUserIndicator() {
+  const status = document.getElementById("userIndicator");
+  const authMenu = document.getElementById("authDropdownMenu");
+
+  if (window.isLoggedIn && window.currentUsername) {
+    // Sidebar user indicator
+    status.textContent = `Logged in as: ${window.currentUsername}`;
+
+    // Dropdown menu content
+    authMenu.innerHTML = `
+      <li class="dropdown-header">Logged in as <strong>${window.currentUsername}</strong></li>
+      <li><button onclick="logoutUser()">Logout</button></li>
+    `;
+  } else {
+    status.textContent = "Not logged in";
+    authMenu.innerHTML = `
+      <li><button onclick="openAuthModal('login')">Login</button></li>
+      <li><button onclick="openAuthModal('register')">Register</button></li>
+    `;
+  }
+
+  // Always update the icon state
+  updateAccountIcon();
+}
+
+function updateUserIndicator() {
+  const userIndicator = document.getElementById("userIndicator");
+  const sidebar = document.getElementById("sidebar");
+  const hamburger = document.getElementById("hamburger");
+
+  if (window.isLoggedIn && window.currentUsername) {
+    // Show logged-in status
+    userIndicator.innerText = `✅ Logged in: ${window.currentUsername}`;
+    
+    // ✅ Show sidebar and hamburger
+    sidebar.style.display = "block";
+    hamburger.style.display = "block";
+
+    // ✅ Enable protected items
+    document.querySelectorAll(".protected").forEach(item => {
+      item.style.display = "block";
+    });
+
+  } else {
+    // Show not logged in status
+    userIndicator.innerText = "❌ Not logged in";
+    
+    // ✅ Hide sidebar and hamburger
+    sidebar.style.display = "none";
+    hamburger.style.display = "none";
+
+    // ✅ Hide protected items
+    document.querySelectorAll(".protected").forEach(item => {
+      item.style.display = "none";
+    });
+  }
+
+  updateAuthDropdown();
+  updateAccountIcon();
+}
+
+
+// ✅ Features dropdown toggle
+const featuresMenu = document.getElementById("featuresMenu");
+if (featuresMenu) {
+  const submenu = featuresMenu.querySelector("ul");
+  featuresMenu.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (submenu) {
+      submenu.style.display = submenu.style.display === "block" ? "none" : "block";
+    }
+  });
+  if (submenu) {
+    submenu.querySelectorAll("li").forEach((li) => {
+      li.addEventListener("click", () => { submenu.style.display = "none"; });
+    });
+  }
+}
+
+// ✅ Section switching
+function showSection(sectionId) {
+  const protectedSections = ["classifier", "guide", "leaderboard", "map-section"];
+
+  if (!window.isLoggedIn && protectedSections.includes(sectionId)) {
+    alert("⚠️ Please log in to access this feature.");
+    sections.forEach(sec => sec.classList.remove("active"));
+    document.getElementById("Login")?.classList.add("active");
+
+    menuItems.forEach(item => item.classList.remove("active"));
+    const loginItem = [...menuItems].find(li => li.getAttribute("onclick")?.includes("Login"));
+    if (loginItem) loginItem.classList.add("active");
+    return;
+  }
+
+  sections.forEach(sec => sec.classList.remove("active"));
+  const el = document.getElementById(sectionId);
+  if (el) el.classList.add("active");
+
+  menuItems.forEach(item => item.classList.remove("active"));
+  const activeItem = [...menuItems].find(li => li.getAttribute("onclick")?.includes(sectionId));
+  if (activeItem) activeItem.classList.add("active");
+}
+// async function loginUser() {
+//   const username = document.getElementById("loginUsername").value;
+//   const password = document.getElementById("loginPassword").value;
+//   try {
+//     const res = await fetch("/login", {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({ username, password }),
+//       credentials: "include"
+//     });
+//     const data = await res.json();
+//     if (res.ok) {
+//       window.isLoggedIn = true;
+//       window.currentUsername = data.username;
+//       updateUserIndicator();
+//       showSection("home");
+
+//       // ✅ Auto-open sidebar after login
+//       document.getElementById("sidebar").classList.add("open");
+
+//     } else alert("❌ " + (data.error || "Login failed"));
+//   } catch (err) { alert("Error: " + err.message); }
+// }
+
+// --- AUTH ---
+async function registerUser() {
+  const username = document.getElementById("regUsername").value;
+  const email = document.getElementById("regEmail").value;
+  const password = document.getElementById("regPassword").value;
+  try {
+    const res = await fetch("/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, email, password })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      // alert("✅ Registration successful. Please log in.");
+      showSection("Login");
+    } else alert("❌ " + (data.error || "Registration failed"));
+  } catch (err) { alert("Error: " + err.message); }
+}
+
+async function loginUser() {
+  const username = document.getElementById("loginUsername").value;
+  const password = document.getElementById("loginPassword").value;
+  try {
+    const res = await fetch("/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+      credentials: "include"
+    });
+    const data = await res.json();
+    if (res.ok) {
+      window.isLoggedIn = true;
+      window.currentUsername = data.username;
+      updateUserIndicator();
+      showSection("home");
+
+      // ✅ Auto-open sidebar after login
+      document.getElementById("sidebar").classList.add("open");
+
+    } else alert("❌ " + (data.error || "Login failed"));
+  } catch (err) { alert("Error: " + err.message); }
+}
+
+
+async function logoutUser() {
+  try {
+    const res = await fetch("/logout", { method: "POST", credentials: "include" });
+    if (res.ok) {
+      window.isLoggedIn = false;
+      window.currentUsername = "";
+      updateUserIndicator();
+
+      // ✅ Hide sidebar completely
+      const sidebar = document.getElementById("sidebar");
+      sidebar.classList.remove("open");
+      sidebar.style.display = "none";
+
+      // ✅ Redirect to Login page
+      showSection("Login");
+    } else {
+      alert("❌ Logout failed");
+    }
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+}
+
+
+async function checkAuth() {
+  try {
+    const res = await fetch("/check-auth", { credentials: "include" });
+    const data = await res.json();
+    if (res.ok && data.loggedIn) {
+      window.isLoggedIn = true;
+      window.currentUsername = data.username;
+      showSection("home"); // ✅ redirect to home if already logged in
+    } else {
+      window.isLoggedIn = false;
+      window.currentUsername = "";
+      showSection("Login"); // ✅ force login page if not logged in
+    }
+  } catch {
+    window.isLoggedIn = false;
+    showSection("Login");
+  }
+  updateUserIndicator();
+}
+
+window.addEventListener("load", checkAuth);
+
+// --- CLASSIFIER ---
+let lastWasteType = "general";
+async function classifyImage() {
+  if (!window.isLoggedIn) { alert("⚠️ Please log in first."); showSection("Login"); return; }
+  const fileInput = document.getElementById("imageUpload");
+  const out = document.getElementById("result");
+  const wasteType = document.getElementById("wasteType");
+  const recyclingProcess = document.getElementById("recyclingProcess");
+  const classifyBtn = document.getElementById("classifyBtn");
+  if (!fileInput.files.length) { out.innerText = "Please upload an image."; return; }
+  classifyBtn.disabled = true; classifyBtn.textContent = "Classifying...";
+  out.innerText = "Classifying...";
+  const formData = new FormData(); formData.append("file", fileInput.files[0]);
+  try {
+    const response = await fetch("/predict", { method: "POST", body: formData, credentials: "include" });
+    const data = await response.json();
+    if (response.ok) {
+      out.innerHTML = `Detected Waste Category: <strong>${data.prediction}</strong>`;
+      wasteType.innerHTML = `Waste Type: <strong>${data.waste_type}</strong>`;
+      recyclingProcess.innerHTML = `Recycling Process: <strong>${data.recycling_process}</strong>`;
+      lastWasteType = data.waste_type;
+      highlightBin(data.dustbin);
+    } else out.innerText = "Error: " + (data.error || "Failed");
+  } catch (err) { out.innerText = "Error: " + err.message; }
+  finally { classifyBtn.disabled = false; classifyBtn.textContent = "Classify Waste"; }
+}
+document.getElementById("classifyBtn")?.addEventListener("click", e => { e.preventDefault(); classifyImage(); });
+
+let lastHighlightedBin = null;
+function highlightBin(binName) {
+  document.querySelectorAll(".bin-card").forEach(card => card.classList.remove("highlight"));
+  let target = null;
+  document.querySelectorAll(".bin-card h3").forEach(h3 => {
+    if (h3.textContent.includes(binName)) {
+      target = h3.closest(".bin-card");
+    }
+  });
+  if (target) {
+    target.classList.add("highlight");
+    lastHighlightedBin = target;
+    document.getElementById("viewBinBtn").style.display = "inline-block";
+  }
+}
+
+// --- GUIDE ---
+function searchMaterial(query) {
+  const guideList = document.getElementById("guideList");
+  const tips = { plastic: "Recycle bottles", glass: "Separate by color", metal: "Aluminium is recyclable", organic: "Compostable", paper: "Recycle clean paper", battery: "Take to recycling center" };
+  guideList.innerHTML = "";
+  if (query.trim() !== "") Object.keys(tips).forEach(k => {
+    if (k.includes(query.toLowerCase())) {
+      let li = document.createElement("li");
+      li.textContent = k.toUpperCase() + ": " + tips[k];
+      guideList.appendChild(li);
+    }
+  });
+}
+
+// --- MAP ---
+var map = L.map('map').setView([20.5937, 78.9629], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+    let markers = [];
+    function clearMarkers() { markers.forEach(m => map.removeLayer(m)); markers = []; }
+    function addMarker(lat, lon, popup) { const m = L.marker([lat, lon]).addTo(map).bindPopup(popup); markers.push(m); }
+
+    async function findCenters() {
+      if (!window.isLoggedIn) { alert("Login to find centers."); showSection("Login"); return; }
+      clearMarkers();
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async pos => {
+          const { latitude, longitude } = pos.coords;
+          map.setView([latitude, longitude], 13);
+          addMarker(latitude, longitude, "📍 You are here");
+          const filterType = document.getElementById("wasteFilter").value || lastWasteType;
+          try {
+            const res = await fetch(`/nearby?lat=${latitude}&lon=${longitude}&type=${encodeURIComponent(filterType)}`, { credentials: "include" });
+            const data = await res.json();
+            if (res.ok && data.centers) data.centers.forEach(c => addMarker(c.lat, c.lon, `<b>${c.name}</b><br>Type: ${c.type}`));
+            else alert(data.error || "No centers found");
+          } catch (err) { alert("Error: " + err.message); }
+        });
+      } else alert("Geolocation not supported by your browser.");
+    }
+
+    async function searchLocation() {
+      const query = document.getElementById("locationSearch").value;
+      if (!query.trim()) return;
+      clearMarkers();
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        if (data.length > 0) {
+          const { lat, lon } = data[0];
+          const latf = parseFloat(lat), lonf = parseFloat(lon);
+          map.setView([latf, lonf], 13);
+          addMarker(latf, lonf, `📍 ${query}`);
+          if (!window.isLoggedIn) { alert("Log in to fetch recycling centers for this location."); showSection("Login"); return; }
+          const res2 = await fetch(`/nearby?lat=${latf}&lon=${lonf}&type=${encodeURIComponent(document.getElementById("wasteFilter").value || "general")}`, { credentials: "include" });
+          const data2 = await res2.json();
+          if (res2.ok && data2.centers) data2.centers.forEach(c => addMarker(c.lat, c.lon, `<b>${c.name}</b><br>Type: ${c.type}`));
+          else alert(data2.error || "No centers found");
+        } else alert("Location not found");
+      } catch (err) { alert("Geocoding error: " + err.message); }
+    }
+</script>
+</body>
+</html>
