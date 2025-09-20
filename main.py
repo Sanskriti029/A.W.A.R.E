@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify, render_template, session
 from PIL import Image
 import numpy as np
@@ -130,6 +129,7 @@ def update_user_score(username, points_earned):
 def home():
     return render_template("index.html")
 
+
 # ---- Auth ----
 @app.route("/register", methods=["POST"])
 def register_user():
@@ -176,6 +176,8 @@ def get_current_user():
     users = load_users()
     user = users.get(username, {})
     return jsonify({"username": username, "email": user.get("email")})
+
+
 
 # ---- Prediction ----
 @app.route("/predict", methods=["POST"])
@@ -246,6 +248,19 @@ def nearby():
         return jsonify({"centers": centers})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route("/check-auth", methods=["GET"])
+def check_auth():
+    username = session.get("username")
+    if username:
+        users = load_users()
+        user = users.get(username, {})
+        return jsonify({
+            "loggedIn": True,
+            "username": username,
+            "email": user.get("email")
+        })
+    return jsonify({"loggedIn": False})
 
 # ============================
 if __name__ == "__main__":
