@@ -1,1238 +1,285 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>A.W.A.R.E - Waste Classifier</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Montserrat', Arial, sans-serif;
-      background: #ebf6f5;
-      color: #2c3e50;
-      overflow-x: hidden;
+from flask import Flask, request, jsonify, render_template, session
+from PIL import Image
+import numpy as np
+import tensorflow as tf
+from flask_cors import CORS
+import os
+import json
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__, template_folder="templates")
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
+CORS(app, supports_credentials=True)
+
+# ============================
+# DATABASE (Leaderboard)
+# ============================
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///leaderboard.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+class Leaderboard(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    points = db.Column(db.Integer, default=0)
+    correct_classifications = db.Column(db.Integer, default=0)
+
+with app.app_context():
+    db.create_all()
+
+# ============================
+# AI Model Loading
+# ============================
+model = tf.keras.models.load_model("trashnet_model.h5")
+target_size = (224, 224)
+
+with open("labels.json", "r") as f:
+    class_indices = json.load(f)
+
+idx_to_class = {v: k for k, v in class_indices.items()}
+
+waste_mapping = {
+    "cardboard": {"type": "Paper Waste", "recycling_process": "Recycle in paper bin."},
+    "glass": {"type": "Glass Waste", "recycling_process": "Recycle in glass bin."},
+    "metal": {"type": "Metal Waste", "recycling_process": "Recycle in metal bin."},
+    "paper": {"type": "Paper Waste", "recycling_process": "Recycle in paper bin."},
+    "plastic": {"type": "Plastic Waste", "recycling_process": "Recycle in plastic bin."},
+    "trash": {"type": "Other Waste", "recycling_process": "Dispose responsibly."},
+    "battery": {"type": "E-Waste", "recycling_process": "Take to e-waste center."}
+}
+
+dustbin_guide = {
+    "Plastic Waste": "Blue Bin",
+    "Paper Waste": "Green Bin",
+    "Metal Waste": "Yellow Bin",
+    "Organic Waste": "Brown Bin",
+    "Glass Waste": "Blue Bin",
+    "E-Waste": "Red Bin",
+    "Other Waste": "Black Bin",
+    "Unknown Waste": "Check locally"
+}
+
+RECYCLING_CENTERS = [
+    {"name": "Recycling Plant 1", "lat": 23.2335, "lng": 77.4330},
+    {"name": "Recycling Plant 2", "lat": 23.2700, "lng": 77.4000},
+    {"name": "Nearby Plant", "lat": 23.2000, "lng": 77.5000}
+]
+
+
+# ============================
+# User Storage (JSON)
+# ============================
+USERS_FILE = "users.json"
+def load_users():
+    if os.path.exists(USERS_FILE):
+        with open(USERS_FILE, "r") as f:
+            try:
+                return json.load(f)
+            except Exception:
+                return {}
+    return {}
+
+def save_users(users):
+    with open(USERS_FILE, "w") as f:
+        json.dump(users, f, indent=2)
+
+# ============================
+# Helpers
+# ============================
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if "username" not in session:
+            return jsonify({"error": "Authentication required"}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+def predict_image(image: Image.Image) -> str:
+    img_resized = image.resize(target_size)
+    img_array = tf.keras.preprocessing.image.img_to_array(img_resized)
+    img_array = np.expand_dims(img_array, axis=0) / 255.0
+    preds = model.predict(img_array)
+    predicted_class = np.argmax(preds, axis=1)[0]
+    return idx_to_class.get(predicted_class, "unknown")
+
+def get_waste_info(label):
+    return waste_mapping.get(label.lower(), {"type": "Unknown Waste", "recycling_process": "Check locally."})
+
+def calculate_points(waste_type):
+    mapping = {
+        "Plastic Waste": 10,
+        "Paper Waste": 10,
+        "Glass Waste": 10,
+        "Metal Waste": 10,
+        "E-Waste": 20,
+        "Other Waste": 5,
+        "Unknown Waste": 0
     }
-    h3{
-      text-align: center; color: #16a085; margin-top: 1.5rem; font-weight: bold; font-size: 1.5rem;
-    }
-
-    h2 { margin-bottom: 1rem; color: #16a085; text-align: center;
-      font-weight: bold; font-size: 1.5rem; 
-   ;}
-   
-     
-    button {
-      background: #16a085;
-      color: white;
-      border: none;
-      padding: 0.7rem 1.4rem;
-      margin-top: 0.5rem;
-      border-radius: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.3s ease;
-      display: inline-block;
-    }
-    button:hover { background: #13856e; }
-
-    input, select, textarea {
-      width: 100%;
-      padding: 0.7rem;
-      margin: 0.5rem 0;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      font-size: 1rem;
-    }
-    textarea { resize: vertical; }
-
-    section {
-      background: white;
-      padding: 2rem;
-      margin: 2rem auto;
-      width: 90%;
-      max-width: 800px;
-      border-radius: 20px;
-      box-shadow: 0 8px 18px rgba(0,0,0,0.12);
-      display: none;
-      animation: fadeIn 0.4s ease;
-    }
-    section.active { display: block; }
-    @keyframes fadeIn { from { opacity:0; transform:translateY(10px);} to {opacity:1; transform:none;} }
-
-    /* Sidebar */
-    .hamburger { position: fixed; top: 1rem; left: 1rem; cursor: pointer; z-index: 1001; }
-    .hamburger span { display:block; width:28px; height:3px; margin:5px; background:black; border-radius:5px; }
-
-
-
-    
-    .sidebar {
-      position: fixed; left: -250px; top: 0; width: 250px; height: 100%;
-      background: #16a085; padding-top: 3rem; transition: 0.3s; z-index: 1000; overflow-y: auto;
-       display: none; /* ✅ hide by default */
-    }
-    .sidebar.open { left: 0; }
-    .sidebar ul { list-style: none; padding: 0; margin: 0; }
-    .sidebar ul li {
-      padding: 1rem 1.8rem;
-      color: white;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .sidebar ul li:hover, .sidebar ul li.active {
-      background: #13856e;
-      padding-left: 2.1rem;
-    }
-    .sidebar ul ul { display: none; padding-left: 1rem; background: #1abc9c; }
-    .sidebar ul ul li { font-weight: 500; }
-
-    #userIndicator {
-      padding: 1rem 1.2rem;
-      font-weight: 600;
-      color: #fff;
-      background: rgba(0,0,0,0.15);
-      border-bottom: 1px solid rgba(0,0,0,0.1);
-      
-    }
-#userIndicator {
-  display: none;
-}
-
-    .protected { display: none; }
-
-    .main-content { margin: 2rem auto; max-width: 1000px; padding: 2rem; }
-    .main-title { font-size: 2.2rem; text-align: center; font-weight: bold; color: #13856e; margin-bottom: 1.5rem; }
-
-    #map { height: 400px; width: 100%; border-radius: 1rem; box-shadow: 0 5px 12px rgba(0,0,0,0.15); }
-
-    .auth form { display:flex; flex-direction:column; gap:0.5rem; }
-    .auth form button { margin-top:1rem; }
-
-    @media (max-width: 768px) {
-      .main-content { padding:1rem; }
-      section { padding:1.2rem; margin:1.2rem auto; }
-      .main-title { font-size: 1.7rem; }
-    }
-
-    /* Info page */
-    .bin-info { display: grid; gap: 1.2rem; margin-top: 1.5rem; }
-    .bin-card {
-      display: flex; align-items: center; gap: 1rem;
-      background: #fdfdfd; padding: 1rem 1.5rem;
-      border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      transition: transform 0.2s;
-    }
-    .bin-card img { width: 70px; height: 70px; object-fit: contain; }
-    .bin-card:hover { transform: translateY(-4px); box-shadow: 0 6px 14px rgba(0,0,0,0.15); }
-    .bin-card.highlight {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 18px rgba(22,160,133,0.18);
-      border-left-width: 12px !important;
-    }
-
-    /* Account dropdown */
-    .account-dropdown {
-      position: absolute;
-      top: 1rem;
-      right: 1.5rem;
-    }
-    .account-dropdown .dropdown-toggle {
-      background: #16a085;
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 10px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .account-dropdown .dropdown-menu {
-      display: none;
-      position: absolute;
-      top: 120%;
-      right: 0;
-      background: white;
-      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-      border-radius: 8px;
-      list-style: none;
-      margin: 0;
-      padding: 0.5rem 0;
-      min-width: 140px;
-      z-index: 999;
-    }
-    .account-dropdown .dropdown-menu li {
-      padding: 0.6rem 1rem;
-      cursor: pointer;
-    }
-    .account-dropdown .dropdown-menu li:hover {
-      background: #f4f4f4;
-    }
- #accountIcon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #16a085;
-  color: white;
-  display: none; /* hidden until login */
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 16px;
-  cursor: pointer;
-  position: absolute;
-  top: 1rem;
-  right: 1.5rem;
-}
-
-/* Dropdown menu */
-#accountDropdown {
-  display: none;
-  position: absolute;
-  top: 3.5rem; /* below icon */
-  right: 1.5rem;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  list-style: none;
-  padding: 0.5rem 0;
-  margin: 0;
-  min-width: 120px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-  z-index: 1000;
-}
-.notifications-panel h4 {
-  margin: 0 0 0.5rem 0;
-  font-size: 20px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 0.3rem;
-  display: none;
-}
-
-.notifications-panel ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-
-}
-
-.notifications-panel ul li {
-  font-size: 13px;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #f1f1f1;
-}
-
-.notifications-panel ul li:last-child {
-  border-bottom: none;
-}
-
-#accountDropdown li {
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  font-size: 14px;
-  color: #333;
-}
-
-#accountDropdown li:hover {
-  background: #f5f5f5;
-}
-#accountIcon, #accountDropdown {
-  display: none;
-}
-
-#leaderboard table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-}
-#leaderboard th, #leaderboard td {
-  padding: 0.8rem;
-  border-bottom: 1px solid #ddd;
-  text-align: center;
-}
-#leaderboard th {
-  background-color: #16a085;
-  color: white;
-  border-radius: 6px;
-}
-#leaderboard tbody tr:hover {
-  background-color: #f0f0f0;
-}
-/* 🔔 Toast notifications */
-#toastContainer {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 2000;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.toast {
-  background: #16a085;
-  color: white;
-  padding: 12px 18px;
-  border-radius: 10px;
-  font-size: 14px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  opacity: 0;
-  transform: translateX(100%);
-  transition: all 0.4s ease;
-  max-width: 300px;
-}
-
-.toast.show {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.toast.hide {
-  opacity: 0;
-  transform: translateX(100%);
-}
-/* Pulse animation for new notifications */
-@keyframes pulse {
-  0% { transform: scale(1); box-shadow: 0 0 0 rgba(22,160,133, 0.4); }
-  50% { transform: scale(1.2); box-shadow: 0 0 10px rgba(22,160,133, 0.6); }
-  100% { transform: scale(1); box-shadow: 0 0 0 rgba(22,160,133, 0.4); }
-}
-
-.pulse {
-  animation: pulse 0.6s ease-in-out 2;
-}
-/* Modal background */
-.modal {
-  display: none; /* Hidden by default */
-  position: fixed;
-  z-index: 2000;
-  left: 0; top: 0;
-  width: 100%; height: 100%;
-  overflow: auto;
-  background-color: rgba(0,0,0,0.5);
-  backdrop-filter: blur(2px);
-}
-
-/* Modal content box */
-.modal-content {
-  background: #fff;
-  margin: 10% auto;
-  padding: 20px;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 400px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  text-align: center;
-  position: relative;
-}
-
-/* Close button */
-.close-btn {
-  position: absolute;
-  top: 10px; right: 15px;
-  font-size: 24px;
-  font-weight: bold;
-  color: #333;
-  cursor: pointer;
-}
-.modal-content {
-  background: #fff;
-  margin: 10% auto;
-  padding: 20px;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 400px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  text-align: center;
-  position: relative;
-  border-left: 8px solid #16a085; /* Default color, will override in JS */
-}
-.map-embed {
-  margin: 1.5rem 0;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 6px 14px rgba(0,0,0,0.15);
-}
-.map-embed iframe {
-  width: 100%;
-  height: 450px;
-  border: none;
-  display: block;
-}
-/* Make <a> inside sidebar li look like li text */
-.sidebar ul li a {
-  color: white;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  font-weight: 600;
-}
-
-.sidebar ul li a:hover {
-  background: #13856e;
-  padding-left: 2.1rem;
-  border-radius: 4px;
-}
-
-
-  </style>
-<body>
-  <div id="appContainer" style="display:none;">
-<!-- Sidebar -->
-<div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
-<div class="sidebar" id="sidebar">
-  <div id="userIndicator">Not logged in</div>
-  <ul>
-    <li onclick="showSection('home')">🏠 Home</li>
-    <li id="featuresMenu" class="protected">✨ Features
-      <ul>
-        <li class="protected" onclick="showSection('classifier')">AI Classifier</li>
-        <li class="protected" onclick="showSection('guide')">Recycling Guide</li>
-        <li class="protected" onclick="showSection('leaderboard')">Leaderboard</li>
-      </ul>
-    </li>
-    <li class="protected"><a href="/map"><span>📖</span>  Recycling Centers </a></li>
-
-    <!-- <li class="protected" onclick="showSection('map-section')">🗺 Map</li> -->
-    <li class="protected" onclick="showSection('information')">ℹ️ Information</li>
-    <li onclick="showSection('about-us')">👥 About Us</li>
-    <!-- <li onclick="showSection('contact-us')">📩 Contact Us</li> -->
-  </ul>
-</div>
-
-<div class="main-content">
-  <div class="main-title">A.W.A.R.E.</div>
-
-<div id="accountIcon"></div>
-<ul id="accountDropdown" class="account-dropdown">
-  <li id="notificationsBtn">Notifications</li>
-  <li id="logoutBtn">Logout</li>
-</ul>
-
-<!-- Notifications Panel (hidden by default) -->
-<div id="notificationsPanel" class="notifications-panel">
-  <h4>Notifications</h4>
-  <ul id="notificationsList"></ul>
-</div>
-<div id="toastContainer"></div>
-</div>
-
-<section id="home">
-  <h2>Welcome to A.W.A.R.E.</h2>
-  <h3>♻️ Artificial Waste Analysis and Recycling Engine</h3>
-  <p>AI-powered platform to classify waste, guide recycling, and locate recycling centers.</p>
-</section>
-
-<!-- Login (make this active by default) -->
- 
-<section id="Login" class="auth active">
-  <h3>Welcome to A.W.A.R.E. <br>
- <h4>Login to your account.</h4>
- </h3>
-  <h2>Login</h2>
-  <form onsubmit="event.preventDefault(); loginUser();">
-    <input type="text" id="loginUsername" placeholder="Username" required />
-    <input type="password" id="loginPassword" placeholder="Password" required />
-    <button type="submit">Login</button>
-    <p style="text-align:center; margin-top:8px;">Don't have an account? <a href="#register" onclick="showSection('register')">Register</a></p>
-  </form>
-  <p id="loginStatus" style="text-align:center;"></p>
-</section>
-
-   <section id="classifier">
-  <h2>AI Waste Classifier</h2>
-  <input type="file" id="imageUpload" accept="image/*">
-  <button id="classifyBtn">Classify Waste</button>
-  <p id="result"></p>
-  <p id="wasteType"></p>
-  <p id="recyclingProcess"></p>
-  <!-- Inside <section id="classifier"> -->
-<!-- <button id="goToCentersBtn" style="margin-top:10px; background:#f39c12;">Find Recycling Centers</button> -->
-
-  <button id="viewBinBtn" style="display:none;">View Bin Info</button>
-
-  <!-- Bin Info Modal -->
-  <div id="binInfoModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
-       background: rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:10000;">
-    <div style="background:white; padding:2rem; border-radius:12px; max-width:400px; width:90%; position:relative;">
-      <span id="closeBinModal" style="position:absolute; top:10px; right:15px; cursor:pointer; font-size:20px;">&times;</span>
-      <h3 id="binModalTitle"></h3>
-      <p id="binModalDesc"></p>
-    </div>
-  </div> 
-</section>
-
-
-    <section id="guide">
-      <h2>Recycling Guide</h2>
-      <input type="text" placeholder="Enter material..." onkeyup="searchMaterial(this.value)">
-      <ul id="guideList"></ul>
-    </section>
-
-    <section id="register" class="auth">
-      <h2>Register</h2>
-      <form onsubmit="event.preventDefault(); registerUser();">
-        <input type="text" id="regUsername" placeholder="Username" required />
-        <input type="email" id="regEmail" placeholder="Email" required />
-        <input type="password" id="regPassword" placeholder="Password" required />
-        <button type="submit">Register</button>
-      </form>
-    </section>
-
-   <section id="leaderboard">
-  <h2>🏆 Leaderboard</h2>
-  <table id="leaderboardTable">
-    <thead>
-      <tr>
-        <th>Rank</th>
-        <th>User</th>
-        <th>Points</th>
-        <th>Classifications</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</section>
-    <!-- <section id="map-section">
-      <h2>Nearby Recycling Centers</h2>
-      <input type="text" id="locationSearch" placeholder="Enter city or area name">
-      <button onclick="searchLocation()">Search Location</button>
-      <label for="wasteFilter">Filter by Waste Type:</label>
-      <select id="wasteFilter">
-        <option value="general">General</option>
-        <option value="Plastic Waste">Plastic Waste</option>
-        <option value="Paper Waste">Paper Waste</option>
-        <option value="Glass Waste">Glass Waste</option>
-        <option value="Metal Waste">Metal Waste</option>
-        <option value="E-Waste">E-Waste</option>
-      </select>
-      <div id="map"></div>
-      <button onclick="findCenters()">Find Recycling Centers</button>
-      
-    </section> -->
-<!-- <section id="map-section">
-  <h2>Nearby Recycling Centers</h2>
-  <input type="text" id="locationSearch" placeholder="Enter city or area name">
-  <button onclick="searchLocation()">Search Location</button>
-  <label for="wasteFilter">Filter by Waste Type:</label>
-  <select id="wasteFilter">
-    <option value="general">General</option>
-    <option value="Plastic Waste">Plastic Waste</option>
-    <option value="Paper Waste">Paper Waste</option>
-    <option value="Glass Waste">Glass Waste</option>
-    <option value="Metal Waste">Metal Waste</option>
-    <option value="E-Waste">E-Waste</option>
-  </select> -->
-
-  <!-- ✅ Google Maps Embed Only -->
-  <!-- <div class="map-embed">
-    <iframe 
-      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d234700.90002902807!2d77.24107900392008!3d23.199323871704177!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x397c428f8fd68fbd%3A0x2155716d572d4f8!2sBhopal%2C%20Madhya%20Pradesh!5e0!3m2!1sen!2sin!4v1758211734687!5m2!1sen!2sin" 
-      width="100%" 
-      height="450" 
-      style="border:0;" 
-      allowfullscreen 
-      loading="lazy" 
-      referrerpolicy="no-referrer-when-downgrade">
-    </iframe>
-  </div>
-</section>-->
-
-   <section id="information"> 
-    <h2>♻️ Dustbin Information Guide</h2>
-    <p>Different colored bins are used for proper waste segregation. Here’s a quick guide:</p>
-    <div class="bin-info">
-      <div class="bin-card" style="border-left:8px solid blue;">
-        <img src="{{ url_for('static', filename='images/blue-bin.png') }}" alt="Blue Bin">
-        <div>
-          <h3>Blue Bin – <span style="color:blue;">Recyclables</span></h3>
-          <p>For <b>Plastic, Glass, Metal, and Paper</b> that can be recycled. Avoid food-stained or wet waste.</p>
-        </div>
-      </div>
-      <div class="bin-card" style="border-left:8px solid green;">
-        <img src="{{ url_for('static', filename='images/green-bin.png') }}" alt="Green Bin">
-        <div>
-          <h3>Green Bin – <span style="color:green;">Biodegradable Waste</span></h3>
-          <p>For <b>Organic waste</b> like vegetable peels, food scraps, garden waste. Used for composting.</p>
-        </div>
-      </div>
-      <div class="bin-card" style="border-left:8px solid black;">
-        <img src="{{ url_for('static', filename='images/black-bin.png') }}" alt="Black Bin">
-        <div>
-          <h3>Black Bin – <span style="color:black;">Non-Recyclables</span></h3>
-          <p>For <b>Domestic hazardous & non-recyclable items</b> like sanitary waste, dust, ceramics.</p>
-        </div>
-      </div>
-      <div class="bin-card" style="border-left:8px solid red;">
-        <img src="{{ url_for('static', filename='images/red-bin.png') }}" alt="Red Bin">
-        <div>
-          <h3>Red Bin – <span style="color:red;">E-Waste & Hazardous</span></h3>
-          <p>For <b>Batteries, electronics, medical waste</b>. Should be sent to special facilities.</p>
-        </div>
-      </div>
-      <div class="bin-card" style="border-left:8px solid brown;">
-        <img src="{{ url_for('static', filename='images/brown-bin.png') }}" alt="Brown Bin">
-        <div>
-          <h3>Brown Bin – <span style="color:brown;">Organic Waste</span></h3>
-          <p>For <b>Kitchen scraps</b>, used tea leaves, small amounts of garden waste. Ideal for composting at home.
-          </p>
-        </div>
-      </div>
-      <div class="bin-card" style="border-left:8px solid yellow;">
-        <img src="{{ url_for('static', filename='images/yellow-bin.png') }}" alt="Yellow Bin">
-        <div>
-          <h3>Yellow Bin – <span style="color:goldenrod;">Metal Waste</span></h3>
-          <p>For <b>Cans, foils, tins, and other metallic items</b> to be recycled separately.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-    </section>
-
-     <!-- <section id="contact-us">
-      <h2>Contact Us</h2>
-      <p>Reach us at <strong>support@aware.com</strong></p>
-      <form onsubmit="event.preventDefault(); alert('Message sent!');">
-        <input type="text" placeholder="Name" required>
-        <input type="email" placeholder="Email" required>
-        <textarea placeholder="Message" required></textarea>
-        <button type="submit">Send Message</button>
-      </form>
-    </section> -->
-    <!-- Removed duplicate leaderboard section to fix id conflict -->
-   <section id="about-us">
-      <h2>About Us</h2>
-      <p> We are a group of eco-conscious developers using AI and data-driven tools to promote
-        recycling, sustainable living, and environmental awareness. Our mission is to make it easy
-        for everyone to understand how to manage waste, recyle them for making the future better .</p>
-    </section>
-</div>
-<!-- Bin Info Modal -->
-<div id="binModal" class="modal">
-  <div class="modal-content">
-    <span class="close-btn">&times;</span>
-    <div id="binModalContent"></div>
-  </div>
-</div>
-
-
-<script>
-  const wasteFacts = [
-  "♻️ Recycling one aluminum can saves enough energy to run a TV for 3 hours.",
-  "🌍 Plastic takes up to 500 years to decompose in landfills.",
-  "🍌 Food waste makes up almost 20% of landfills globally.",
-  "📄 Recycling one ton of paper saves 17 trees.",
-  "🔋 Batteries should never go in general waste — they can leak harmful chemicals.",
-  "🪟 Glass is 100% recyclable and can be recycled endlessly without loss of quality.",
-  "Waste isn’t waste until we waste it. – Unknown",
-  "The greatest threat to our planet is the belief that someone else will save it.” – Robert Swan",
-  "We do not inherit the Earth from our ancestors; we borrow it from our children.” – Native American Proverb",
-"When you refuse to reuse, it’s the Earth you abuse. – Unknown",
- "The Earth is what we all have in common. – Wendell Berry",
-"Less pollution is the best solution. – Unknown",
-"Recycling turns things into other things. Which is like magic. – Unknown",
-"Nature provides a free lunch, but only if we control our appetites. – William Ruckelshaus",
-"There is no such thing as ‘away’. When we throw anything away, it must go somewhere. – Annie Leonard",
-"Small acts, when multiplied by millions of people, can transform the world. – Howard Zinn",
- "The world generates over 2.1 billion tons of municipal solid waste annually (World Bank, 2022).",
- "At least 33% of waste globally is not managed in an environmentally safe way.",
-"Glass::Like aluminum, glass is 100% recyclable and can be recycled endlessly without any loss of quality.",
-"Slow to Decompose: A modern glass bottle would take at least 4,000 years to decompose in a landfill.",
-"Energy and Pollution Reduction: Recycling glass saves 20% less air pollution and 50% less water pollution compared to making new glass from raw materials.",
-"Ancient Roots: Recycling isn't a modern invention. The first documented instance of paper recycling took place in Japan in the year 1031.",
-"A 'Seventh Resource': Recycling is sometimes called the world's 'Seventh Resource' because it's a crucial component of sustainable resource management.",
-"Most Waste is Recyclable: It's estimated that around 75% of all waste can be recycled, even though current recycling rates are much lower.",
-"Recycling Saves Energy: Making new products from recycled materials almost always uses less energy than creating them from raw, 'virgin',materials.",
-"Job Creation: The recycling industry creates jobs. A study by the Natural Resources Defense Council found that managing 1,000 tons of waste through recycling creates significantly more jobs than landfilling the same amount."
-];
-
-const binColors = {
-  plastic: "Blue Bin",
-  paper: "Blue Bin",
-  glass: "Blue Bin",
-  organic: "Green Bin",
-  "e-waste": "Red Bin",
-  hazardous: "Red Bin",
-  metal: "Yellow Bin",
-  general: "Black Bin"
-};
-let lastWasteType = "";
-let lastHighlightedBin = null;
-
-
-// Duplicate immediate classification block removed because it used top-level await and had an unmatched closing.
-// Classification is handled via the classifyImage() async function and its event listeners defined later.
-
-// Highlight bin
-function highlightBin(binName) {
-  document.querySelectorAll(".bin-card").forEach(card => card.classList.remove("highlight"));
-  let target = null;
-  document.querySelectorAll(".bin-card h3").forEach(h3 => {
-    if (h3.textContent.includes(binName)) target = h3.closest(".bin-card");
-  });
-
-  if (target) {
-    target.classList.add("highlight");
-    lastHighlightedBin = target;
-    document.getElementById("viewBinBtn").style.display = "inline-block";
-  }
-}
-
-// Modal logic
-const binInfoModal = document.getElementById("binInfoModal");
-const binModalTitle = document.getElementById("binModalTitle");
-const binModalDesc = document.getElementById("binModalDesc");
-const closeBinModal = document.getElementById("closeBinModal");
-
-document.getElementById("viewBinBtn").addEventListener("click", () => {
-  // if (!lastHighlightedBin) return alert("No bin selected!");
-  binModalTitle.innerHTML = lastHighlightedBin.querySelector("h3").innerHTML;
-  binModalDesc.innerHTML = lastHighlightedBin.querySelector("p").innerHTML;
-  binInfoModal.style.display = "flex";
-});
-
-closeBinModal.addEventListener("click", () => { binInfoModal.style.display = "none"; });
-window.addEventListener("click", (e) => { if (e.target === binInfoModal) binInfoModal.style.display = "none"; });
-
-  // let lastWasteType = null;
-// ✅ Sidebar toggle
-const hamburger = document.getElementById("hamburger");
-const sidebar = document.getElementById("sidebar");
-hamburger?.addEventListener("click", () => sidebar.classList.toggle("open"));
-
-// ✅ Sections and menu items
-const sections = document.querySelectorAll("section");
-const menuItems = document.querySelectorAll(".sidebar ul li");
-
-// ✅ Account icon (initial only after login)
-function updateAccountIcon() {
-  const accountIcon = document.getElementById("accountIcon");
-  if (!accountIcon) return;
-
-  if (window.isLoggedIn && window.currentUsername) {
-    const initial = window.currentUsername.charAt(0).toUpperCase();
-    accountIcon.textContent = initial;
-    accountIcon.style.display = "flex"; // show after login
-  } else {
-    accountIcon.style.display = "none"; // hide when logged out
-  }
-}
-
-
-
-// ✅ Allow logout by clicking the account icon
-const accountIcon = document.getElementById("accountIcon");
-const accountDropdown = document.getElementById("accountDropdown");
-const logoutBtn = document.getElementById("logoutBtn");
-const notificationsBtn = document.getElementById("notificationsBtn");
-const notificationsPanel = document.getElementById("notificationsPanel");
-const notificationsList = document.getElementById("notificationsList");
-
-// Toggle dropdown
-accountIcon?.addEventListener("click", (e) => {
-  e.stopPropagation();
-  accountDropdown.style.display = accountDropdown.style.display === "block" ? "none" : "block";
-});
-
-// Hide dropdown and notifications when clicking outside
-document.addEventListener("click", () => {
-  accountDropdown.style.display = "none";
-  notificationsPanel.style.display = "none";
-});
-
-// Logout
-logoutBtn?.addEventListener("click", () => {
-  logoutUser();
-  accountDropdown.style.display = "none";
-});
-
-// Notifications toggle
-notificationsBtn?.addEventListener("click", (e) => {
-  e.stopPropagation();
-  notificationsPanel.style.display = notificationsPanel.style.display === "block" ? "none" : "block";
-});
-function showToast(message) {
-  const container = document.getElementById("toastContainer");
-  const toast = document.createElement("div");
-  toast.className = "toast";
-  toast.textContent = message;
-
-  container.appendChild(toast);
-
-  // Animate in
-  setTimeout(() => toast.classList.add("show"), 100);
-
-  // Auto remove after 4s
-  setTimeout(() => {
-    toast.classList.remove("show");
-    toast.classList.add("hide");
-    setTimeout(() => toast.remove(), 400);
-  }, 4000);
-}
-
-// Example: Load sample notifications (replace with API later)
-function addNotification(message) {
-  const li = document.createElement("li");
-  li.textContent = message;
-  notificationsList.prepend(li); // newest on top
-
-  // Show toast
-  showToast(message);
-
-  // Pulse the account icon to indicate new notification
-  const accountIcon = document.getElementById("accountIcon");
-  if (accountIcon) {
-    accountIcon.classList.add("pulse");
-
-    // Remove pulse class after animation ends to allow future pulses
-    setTimeout(() => accountIcon.classList.remove("pulse"), 1200); // matches 0.6s x2
-  }
-}
-
-
-
-// Load notifications when user logs in
-function updateUserIndicator() {
-  const userIndicator = document.getElementById("userIndicator");
-
-  if (window.isLoggedIn && window.currentUsername) {
-    userIndicator.innerText = `✅ Logged in: ${window.currentUsername}`;
-
-    // Show sidebar + toggle
-    sidebar.style.display = "block";
-    hamburger.style.display = "block";
-
-    // Show protected items
-    document.querySelectorAll(".protected").forEach(item => {
-      item.style.display = "block";
-    });
-  } else {
-    userIndicator.innerText = "❌ Not logged in";
-
-    // Hide sidebar + toggle
-    sidebar.style.display = "none";
-    hamburger.style.display = "none";
-
-    // Hide protected items
-    document.querySelectorAll(".protected").forEach(item => {
-      item.style.display = "none";
-    });
-  }
-
-  updateAccountIcon(); // update the initial letter icon
-}
-  
-
-// ✅ Features dropdown toggle (for "Features" inside sidebar)
-const featuresMenu = document.getElementById("featuresMenu");
-if (featuresMenu) {
-  const submenu = featuresMenu.querySelector("ul");
-  featuresMenu.addEventListener("click", (e) => {
-    e.stopPropagation();
-    if (submenu) {
-      submenu.style.display = submenu.style.display === "block" ? "none" : "block";
-    }
-  });
-  if (submenu) {
-    submenu.querySelectorAll("li").forEach((li) => {
-      li.addEventListener("click", () => { submenu.style.display = "none"; });
-    });
-  }
-}
-
-// ✅ Section switching
-function showSection(sectionId) {
-  const protectedSections = ["classifier", "guide", "leaderboard", "map-section"];
-
-  if (!window.isLoggedIn && protectedSections.includes(sectionId)) {
-    alert("⚠️ Please log in to access this feature.");
-    sections.forEach(sec => sec.classList.remove("active"));
-    document.getElementById("Login")?.classList.add("active");
-
-    menuItems.forEach(item => item.classList.remove("active"));
-    return;
-  }
-
-  sections.forEach(sec => sec.classList.remove("active"));
-  const el = document.getElementById(sectionId);
-  if (el) el.classList.add("active");
-
-  menuItems.forEach(item => item.classList.remove("active"));
-  const activeItem = [...menuItems].find(li => li.getAttribute("onclick")?.includes(sectionId));
-  if (activeItem) activeItem.classList.add("active");
-
-  // ✅ Load leaderboard when the section is active
-  if (sectionId === "leaderboard") loadLeaderboard();
-}
-
-// --- AUTH ---
-async function registerUser() {
-  const username = document.getElementById("regUsername").value;
-  const email = document.getElementById("regEmail").value;
-  const password = document.getElementById("regPassword").value;
-  try {
-    const res = await fetch("/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, email, password })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      showSection("Login");
-    } else alert("❌ " + (data.error || "Registration failed"));
-  } catch (err) { alert("Error: " + err.message); }
-}
-
-async function loginUser() {
-  const username = document.getElementById("loginUsername").value;
-  const password = document.getElementById("loginPassword").value;
-  try {
-    const res = await fetch("/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-      credentials: "include"
-    });
-    const data = await res.json();
-    if (res.ok) {
-      window.isLoggedIn = true;
-      window.currentUsername = data.username;
-      updateUserIndicator();
-      showSection("home");
-      document.getElementById("sidebar").classList.add("open");
-
-       // ✅ Add login notification
-      addNotification(`Welcome back, ${window.currentUsername}! 🎉`);
-
-      // ✅ Start waste fact notifications
-      startWasteFactNotifications(30000); // every 30s
-
-    } else alert("❌ " + (data.error || "Login failed"));
-  } catch (err) { alert("Error: " + err.message); }
-}
-
-async function logoutUser() {
-  try {
-    const res = await fetch("/logout", { method: "POST", credentials: "include" });
-    if (res.ok) {
-      window.isLoggedIn = false;
-      window.currentUsername = "";
-      updateUserIndicator();
-
-      sidebar.classList.remove("open");
-      sidebar.style.display = "none";
-      showSection("Login");
-    } else {
-      alert("❌ Logout failed");
-    }
-  } catch (err) {
-    alert("Error: " + err.message);
-  }
-}
-
-async function checkAuth() {
-  try {
-    const res = await fetch("/check-auth", { credentials: "include" });
-    const data = await res.json();
-    if (res.ok && data.loggedIn) {
-      window.isLoggedIn = true;
-      window.currentUsername = data.username;
-      showSection("home");
-    } else {
-      window.isLoggedIn = false;
-      window.currentUsername = "";
-      showSection("Login");
-    }
-  } catch {
-    window.isLoggedIn = false;
-    showSection("Login");
-  }
-  updateUserIndicator();
-}
-
-window.addEventListener("load", async () => {
-  await checkAuth(); // sets window.isLoggedIn and currentUsername
-  document.getElementById("appContainer").style.display = "block"; // show content only after auth check
-});
-
-// --- GUIDE ---
-function searchMaterial(query) {
-  const guideList = document.getElementById("guideList");
-  const tips = { plastic: "Recycle bottles", glass: "Separate by color", metal: "Aluminium is recyclable", organic: "Compostable", paper: "Recycle clean paper", battery: "Take to recycling center", organic: "Plant and animal materials that can decompose.", recyclable: "Materials that can be reprocessed into new products.", hazardous: "Dangerous, toxic materials like batteries and chemicals." };
-
-
-  guideList.innerHTML = "";
-  if (query.trim() !== "") Object.keys(tips).forEach(k => {
-    if (k.includes(query.toLowerCase())) {
-      let li = document.createElement("li");
-      li.textContent = k.toUpperCase() + ": " + tips[k];
-      guideList.appendChild(li);
-    }
-  });
-}
-
-// --- MAP ---
-
-
-//======================//
-//classsifier
-// Global
-
-
-
-// let lastWasteType = "general";
-async function classifyImage() {
-  if (!window.isLoggedIn) { 
-    alert("⚠️ Please log in first."); 
-    showSection("Login"); 
-    return; 
-  }
-
-  const fileInput = document.getElementById("imageUpload");
-  const out = document.getElementById("result");
-  const wasteType = document.getElementById("wasteType");
-  const recyclingProcess = document.getElementById("recyclingProcess");
-  const classifyBtn = document.getElementById("classifyBtn");
-
-  if (!fileInput.files.length) { 
-    out.innerText = "Please upload an image."; 
-    return; 
-  }
-
-  classifyBtn.disabled = true; 
-  classifyBtn.textContent = "Classifying...";
-  out.innerText = "Classifying...";
-
-  const formData = new FormData(); 
-  formData.append("file", fileInput.files[0]);
-
-  try {
-    const response = await fetch("/predict", { method: "POST", body: formData, credentials: "include" });
-    const data = await response.json();
-
-    if (response.ok) {
-      out.innerHTML = `Detected Waste Category: <strong>${data.prediction}</strong>`;
-      wasteType.innerHTML = `Waste Type: <strong>${data.waste_type}</strong>`;
-
-      // 🔑 Get bin color instead of recycling process
-     // const binName = data.dustbin?.toLowerCase() || "general";
-     // const binColor = binColors[binName] || "Black Bin";
-
-      //recyclingProcess.innerHTML = `Recycling Process: <strong>Recycle in ${binColor}</strong>`;
-
-      lastWasteType = (typeof data.waste_type === "string" && data.waste_type.trim() !== "") ? data.waste_type : "general";
-
-      highlightBin(data.dustbin);
-
-      // 🔔 Add notification with random waste fact
-      const randomFact = wasteFacts[Math.floor(Math.random() * wasteFacts.length)];
-      addNotification(randomFact);
-
-    } else {
-      out.innerText = "Error: " + (data.error || "Failed");
-      highlightBin(null);
-    }
-  } catch (err) {
-    out.innerText = "Error: " + err.message;
-    highlightBin(null);
-  } finally { 
-    classifyBtn.disabled = false; 
-    classifyBtn.textContent = "Classify Waste"; 
-  }
-}
-function handleClassifyBtnClick(e) {
-  if (e) e.preventDefault();
-  classifyImage();
-}
-
-function highlightBin(binName) {
-  document.querySelectorAll(".bin-card").forEach(card => card.classList.remove("highlight"));
-  let target = null;
-  document.querySelectorAll(".bin-card h3").forEach(h3 => {
-    if (binName && h3.textContent.toLowerCase().includes(binName.toLowerCase())) {
-      target = h3.closest(".bin-card");
-    }
-  });
-  if (target) {
-    target.classList.add("highlight");
-    document.getElementById("viewBinBtn").style.display = "inline-block";
-  } else {
-    document.getElementById("viewBinBtn").style.display = "none";
-  }
-}
-// / Attach event listener to classify button
-document.getElementById("classifyBtn")?.addEventListener("click", handleClassifyBtnClick);
-
-const binModal = document.getElementById("binModal");
-const binModalContent = document.getElementById("binModalContent");
-const binCloseBtn = document.querySelector(".close-btn");
-
-function goToBinInfo() {
-  if (!lastWasteType) {
-    binModalContent.innerHTML = `
-      <h2 style="color:#555;">No Classification Yet</h2>
-      <p>Please classify an item first to see detailed bin information.</p>
-    `;
-    binModal.style.display = "block";
-    return;
-  }
-
-  // ✅ Map waste type → bin
-  const typeToBin = {
-    "plastic waste": "Blue Bin",
-    "paper waste": "Blue Bin",
-    "glass waste": "Blue Bin",
-    "metal waste": "Yellow Bin",
-    "organic waste": "Green Bin",
-    "e-waste": "Red Bin",
-    "hazardous waste": "Red Bin",
-    "general": "Black Bin"
-  };
-
-  const binName = typeToBin[lastWasteType.toLowerCase()] || null;
-
-  let targetBin = null;
-  if (binName) {
-    document.querySelectorAll(".bin-card").forEach(card => {
-      if (card.querySelector("h3").textContent.includes(binName)) {
-        targetBin = card;
-      }
-    });
-  }
-
-  if (!targetBin) {
-    binModalContent.innerHTML = `
-      <h2 style="color:#e74c3c;">Oops!</h2>
-      <p>No bin information found for <strong>${lastWasteType}</strong>.</p>
-    `;
-    binModal.style.display = "block";
-    return;
-  }
-
-  // Extract bin info
-  const borderColor = targetBin.style.borderLeftColor || getComputedStyle(targetBin).borderLeftColor || "#16a085";
-  const title = targetBin.querySelector("h3").textContent;
-  const description = targetBin.querySelector("p").textContent;
-  const imgSrc = targetBin.querySelector("img")?.src || "";
-
-  // Build modal content
-  binModalContent.innerHTML = `
-    <h2 style="color:${borderColor}; margin-bottom:10px;">${title}</h2>
-    <img src="${imgSrc}" alt="${title}" style="width:80px; margin:10px 0;">
-    <p>${description}</p>
-    <p style="margin-top:15px; font-weight:bold; color:${borderColor};">
-      ✅ Please use the <span style="text-transform:capitalize;">${title}</span> for recycling.
-    </p>
-  `;
-
-  binModal.style.display = "block";
-}
-
-
-// Close modal on X click
-if (binCloseBtn) binCloseBtn.onclick = () => binModal.style.display = "none";
-
-// Close modal on outside click
-window.addEventListener("click", (event) => {
-  if (event.target === binModal) binModal.style.display = "none";
-});
-
-document.getElementById("viewBinBtn")?.addEventListener("click", goToBinInfo);
-//============================//
-//leaderboard
-async function loadLeaderboard() {
-  const tbody = document.getElementById("leaderboardTable").querySelector("tbody");
-  tbody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
-
-  try {
-    const res = await fetch("/api/leaderboard", { credentials: "include" });
-    const data = await res.json();
-    tbody.innerHTML = "";
-    data.forEach(user => {
-      const row = `<tr>
-                     <td>${user.rank}</td>
-                     <td>${user.username}</td>
-                     <td>${user.points}</td>
-                     <td>${user.correct_classifications}</td>
-                   </tr>`;
-      tbody.innerHTML += row;
-    });
-  } catch(err) {
-    tbody.innerHTML = `<tr><td colspan='4'>Error loading leaderboard</td></tr>`;
-  }
-}
-
-// Call this when user opens leaderboard section
-document.querySelector("li[onclick*='leaderboard']").addEventListener("click", loadLeaderboard);
-function calculatePoints(wasteType) {
-    switch(wasteType.toLowerCase()) {
-        case "plastic waste": return 10;
-        case "paper waste": return 10;
-        case "organic waste": return 5;
-        case "e-waste": return 20;
-        case "hazardous waste": return 20;
-        default: return 5;
-    }
-}
-
-// Call backend to update points after classification
-async function updatePointsBackend(username, wasteType) {
-    const points = calculatePoints(wasteType);
-    await fetch("/api/update-score", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, points }),
-        credentials: "include"
-    });
-}
-
-
-// Function to show a random waste fact every interval
-function startWasteFactNotifications(interval = 30000) { // 30,000ms = 30s
-  setInterval(() => {
-    const randomFact = wasteFacts[Math.floor(Math.random() * wasteFacts.length)];
-    addNotification(randomFact);
-  }, interval);
-}
-
-// Call this after user logs in
-window.addEventListener("load", () => {
-  if (window.isLoggedIn) {
-    startWasteFactNotifications(30000); // every 30s
-  }
-});
-
-
-document.getElementById("goToCentersBtn").addEventListener("click", () => {
-  if (!window.isLoggedIn) {
-    alert("⚠️ Please log in first to access recycling centers.");
-    showSection("Login");
-    return;
-  }
-
-  // Redirect to the map section
-  // showSection("map-section");
- window.location.href = "/api/recycling-centers";
-  // Optional: focus on last classified waste type in filter
-  const wasteFilter = document.getElementById("wasteFilter");
-  if (lastWasteType) {
-    wasteFilter.value = lastWasteType;
-  }
-
-  // Optionally, trigger finding centers automatically
-  findCenters();
-});
-
-</script>
-
-
-
-</body>
-</html>
+    return mapping.get(waste_type, 5)
+
+def update_user_score(username, points_earned):
+    user = Leaderboard.query.filter_by(username=username).first()
+    if not user:
+        user = Leaderboard(username=username, points=points_earned, correct_classifications=1)
+        db.session.add(user)
+    else:
+        user.points += points_earned
+        user.correct_classifications += 1
+    db.session.commit()
+
+# ============================
+# Routes
+# ============================
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+
+# ---- Auth ----
+@app.route("/register", methods=["POST"])
+def register_user():
+    data = request.json or {}
+    username = (data.get("username") or "").strip()
+    email = (data.get("email") or "").strip()
+    password = data.get("password") or ""
+
+    if not username or not email or not password:
+        return jsonify({"error": "All fields are required"}), 400
+
+    users = load_users()
+    if username in users or any(u.get("email") == email for u in users.values()):
+        return jsonify({"error": "Username/email already exists"}), 400
+
+    users[username] = {"email": email, "password": generate_password_hash(password)}
+    save_users(users)
+    return jsonify({"message": "Registration successful!"}), 201
+
+@app.route("/login", methods=["POST"])
+def login_user():
+    data = request.json or {}
+    username = (data.get("username") or "").strip()
+    password = data.get("password") or ""
+
+    users = load_users()
+    user = users.get(username)
+    if not user or not check_password_hash(user.get("password", ""), password):
+        return jsonify({"error": "Invalid credentials"}), 401
+
+    session["username"] = username
+    return jsonify({"message": "Login successful!", "username": username}), 200
+
+@app.route("/logout", methods=["POST"])
+def logout_user():
+    session.pop("username", None)
+    return jsonify({"message": "Logged out"}), 200
+
+@app.route("/me")
+def get_current_user():
+    username = session.get("username")
+    if not username:
+        return jsonify({"username": None})
+    users = load_users()
+    user = users.get(username, {})
+    return jsonify({"username": username, "email": user.get("email")})
+
+
+
+# ---- Prediction ----
+@app.route("/predict", methods=["POST"])
+@login_required
+def predict():
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+    try:
+        img = Image.open(request.files["file"].stream).convert("RGB")
+        prediction = predict_image(img)
+        waste_info = get_waste_info(prediction)
+
+        # Update leaderboard
+        points = calculate_points(waste_info["type"])
+        update_user_score(session["username"], points)
+
+        return jsonify({
+            "prediction": prediction,
+            "waste_type": waste_info["type"],
+            "recycling_process": waste_info["recycling_process"],
+            "dustbin": dustbin_guide.get(waste_info["type"], "Unknown Bin")
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/map')
+def map_view():
+    return render_template("map.html")
+
+@app.route('/api/recycling-centers')
+def recycling_centers():
+    return jsonify(RECYCLING_CENTERS)
+
+# ---- Leaderboard ----
+@app.route("/api/leaderboard", methods=["GET"])
+def get_leaderboard():
+    top_users = Leaderboard.query.order_by(Leaderboard.points.desc()).limit(10).all()
+    result = [{"rank": i+1, "username": u.username, "points": u.points, "correct_classifications": u.correct_classifications} 
+              for i, u in enumerate(top_users)]
+    return jsonify(result)
+
+# ---- Nearby Recycling Centers ----
+@app.route("/nearby")
+@login_required
+def nearby():
+    lat = request.args.get("lat")
+    lon = request.args.get("lon")
+    type_filter = request.args.get("type", "general").lower()
+    if not lat or not lon:
+        return jsonify({"error": "Missing latitude/longitude"}), 400
+    try:
+        # Overpass API
+        import requests
+        query = f"""
+        [out:json];
+        node(around:20000,{lat},{lon})[amenity=recycling];
+        out;
+        """
+        response = requests.get("http://overpass-api.de/api/interpreter", params={"data": query}, timeout=15)
+        data = response.json()
+        centers = []
+        for el in data.get("elements", []):
+            center_type = el.get("tags", {}).get("recycling_type", "general").lower()
+            if type_filter == "general" or type_filter in center_type:
+                centers.append({
+                    "name": el.get("tags", {}).get("name", "Recycling Center"),
+                    "lat": el["lat"],
+                    "lon": el["lon"],
+                    "type": center_type
+                })
+        if not centers:
+            centers = [
+                {"name": "Eco Recycling Hub", "lat": float(lat)+0.01, "lon": float(lon)+0.01, "type": "plastic"},
+                {"name": "Green E-Waste Solutions", "lat": float(lat)-0.01, "lon": float(lon)-0.01, "type": "e-waste"}
+            ]
+        return jsonify({"centers": centers})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/check-auth", methods=["GET"])
+def check_auth():
+    username = session.get("username")
+    if username:
+        users = load_users()
+        user = users.get(username, {})
+        return jsonify({
+            "loggedIn": True,
+            "username": username,
+            "email": user.get("email")
+        })
+    return jsonify({"loggedIn": False})
+
+# ============================
+if __name__ == "__main__":
+    if not os.path.exists(USERS_FILE):
+        save_users({})
+    app.run(host="0.0.0.0", port=5000, debug=True)
