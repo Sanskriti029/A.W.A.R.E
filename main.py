@@ -61,6 +61,13 @@ dustbin_guide = {
     "Unknown Waste": "Check locally"
 }
 
+RECYCLING_CENTERS = [
+    {"name": "Recycling Plant 1", "lat": 23.2335, "lng": 77.4330},
+    {"name": "Recycling Plant 2", "lat": 23.2700, "lng": 77.4000},
+    {"name": "Nearby Plant", "lat": 23.2000, "lng": 77.5000}
+]
+
+
 # ============================
 # User Storage (JSON)
 # ============================
@@ -202,6 +209,15 @@ def predict():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/map')
+def map_view():
+    return render_template("map.html")
+
+@app.route('/api/recycling-centers')
+def recycling_centers():
+    return jsonify(RECYCLING_CENTERS)
 
 # ---- Leaderboard ----
 @app.route("/api/leaderboard", methods=["GET"])
