@@ -108,7 +108,7 @@
     .main-content { margin: 2rem auto; max-width: 1000px; padding: 2rem; }
     .main-title { font-size: 2.2rem; text-align: center; font-weight: bold; color: #13856e; margin-bottom: 1.5rem; }
 
-    /* #map { height: 400px; width: 100%; border-radius: 1rem; box-shadow: 0 5px 12px rgba(0,0,0,0.15); } */
+    #map { height: 400px; width: 100%; border-radius: 1rem; box-shadow: 0 5px 12px rgba(0,0,0,0.15); }
 
     .auth form { display:flex; flex-direction:column; gap:0.5rem; }
     .auth form button { margin-top:1rem; }
@@ -208,7 +208,7 @@
 }
 .notifications-panel h4 {
   margin: 0 0 0.5rem 0;
-  font-size: 14px;
+  font-size: 20px;
   border-bottom: 1px solid #eee;
   padding-bottom: 0.3rem;
   display: none;
@@ -398,12 +398,12 @@
         <li class="protected" onclick="showSection('leaderboard')">Leaderboard</li>
       </ul>
     </li>
-    <li class="protected"><a href="/map"><span>📖</span> Recycling Centers </a></li>
+    <li class="protected"><a href="/map"><span>📖</span>  Recycling Centers </a></li>
 
     <!-- <li class="protected" onclick="showSection('map-section')">🗺 Map</li> -->
     <li class="protected" onclick="showSection('information')">ℹ️ Information</li>
     <li onclick="showSection('about-us')">👥 About Us</li>
-    <li onclick="showSection('contact-us')">📩 Contact Us</li>
+    <!-- <li onclick="showSection('contact-us')">📩 Contact Us</li> -->
   </ul>
 </div>
 
@@ -596,7 +596,7 @@
   </section>
     </section>
 
-     <section id="contact-us">
+     <!-- <section id="contact-us">
       <h2>Contact Us</h2>
       <p>Reach us at <strong>support@aware.com</strong></p>
       <form onsubmit="event.preventDefault(); alert('Message sent!');">
@@ -605,7 +605,7 @@
         <textarea placeholder="Message" required></textarea>
         <button type="submit">Send Message</button>
       </form>
-    </section>
+    </section> -->
     <!-- Removed duplicate leaderboard section to fix id conflict -->
    <section id="about-us">
       <h2>About Us</h2>
@@ -642,9 +642,17 @@
 "There is no such thing as ‘away’. When we throw anything away, it must go somewhere. – Annie Leonard",
 "Small acts, when multiplied by millions of people, can transform the world. – Howard Zinn",
  "The world generates over 2.1 billion tons of municipal solid waste annually (World Bank, 2022).",
-
- "At least 33% of waste globally is not managed in an environmentally safe way."
+ "At least 33% of waste globally is not managed in an environmentally safe way.",
+"Glass::Like aluminum, glass is 100% recyclable and can be recycled endlessly without any loss of quality.",
+"Slow to Decompose: A modern glass bottle would take at least 4,000 years to decompose in a landfill.",
+"Energy and Pollution Reduction: Recycling glass saves 20% less air pollution and 50% less water pollution compared to making new glass from raw materials.",
+"Ancient Roots: Recycling isn't a modern invention. The first documented instance of paper recycling took place in Japan in the year 1031.",
+"A 'Seventh Resource': Recycling is sometimes called the world's 'Seventh Resource' because it's a crucial component of sustainable resource management.",
+"Most Waste is Recyclable: It's estimated that around 75% of all waste can be recycled, even though current recycling rates are much lower.",
+"Recycling Saves Energy: Making new products from recycled materials almost always uses less energy than creating them from raw, 'virgin',materials.",
+"Job Creation: The recycling industry creates jobs. A study by the Natural Resources Defense Council found that managing 1,000 tons of waste through recycling creates significantly more jobs than landfilling the same amount."
 ];
+
 const binColors = {
   plastic: "Blue Bin",
   paper: "Blue Bin",
@@ -655,7 +663,7 @@ const binColors = {
   metal: "Yellow Bin",
   general: "Black Bin"
 };
-  let lastWasteType = "";
+let lastWasteType = "";
 let lastHighlightedBin = null;
 
 
@@ -746,10 +754,10 @@ logoutBtn?.addEventListener("click", () => {
 });
 
 // Notifications toggle
-// notificationsBtn?.addEventListener("click", (e) => {
-//   e.stopPropagation();
-//   notificationsPanel.style.display = notificationsPanel.style.display === "block" ? "none" : "block";
-// });
+notificationsBtn?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  notificationsPanel.style.display = notificationsPanel.style.display === "block" ? "none" : "block";
+});
 function showToast(message) {
   const container = document.getElementById("toastContainer");
   const toast = document.createElement("div");
@@ -1213,13 +1221,13 @@ document.getElementById("goToCentersBtn").addEventListener("click", () => {
   // showSection("map-section");
  window.location.href = "/api/recycling-centers";
   // Optional: focus on last classified waste type in filter
-  // const wasteFilter = document.getElementById("wasteFilter");
-  // if (lastWasteType) {
-  //   wasteFilter.value = lastWasteType;
-  // }
+  const wasteFilter = document.getElementById("wasteFilter");
+  if (lastWasteType) {
+    wasteFilter.value = lastWasteType;
+  }
 
   // Optionally, trigger finding centers automatically
-  // findCenters();
+  findCenters();
 });
 
 </script>
@@ -1228,5 +1236,3 @@ document.getElementById("goToCentersBtn").addEventListener("click", () => {
 
 </body>
 </html>
-
-
