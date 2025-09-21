@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bhopal Recycling Centers Map</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <style>
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+  #map {
+    height: 100%;
+    width: 100%;
+  } 
+</style>
+
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; }
+    #map { height: 100%; width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- Turf.js (for nearest point calculation) -->
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+  <!-- Custom map logic -->
+  <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+
+</body> 
+</html>
+
+
+<!-- <!DOCTYPE html>
+<html>
+<head>
+  <title>Smart Waste Bins in Bhopal</title>
+  <style>
+    #map {
+      height: 600px;
+      width: 100%;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    h2 {
+      text-align: center;
+      margin: 20px;
+    }
+    /* Legend box */
+    #legend {
+      background: white;
+      padding: 10px;
+      margin: 10px;
+      border: 2px solid #000;
+      font-size: 14px;
+    }
+    #legend h3 {
+      margin-top: 0;
+      font-size: 16px;
+      text-align: center;
+    }
+    #legend div {
+      margin: 4px 0;
+    }
+    #legend img {
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    /* Search Box */
+    #pac-input {
+      background-color: #fff;
+      font-size: 16px;
+      padding: 8px;
+      margin: 10px;
+      width: 300px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+  </style> -->
+  <!-- Google Maps API -->
+  <!-- <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyChsSKMYNe56WTvndxcWcr7iErvvBou4x8&libraries=places&callback=initMap" async defer></script>
+  <script>
+    let map;
+    let markers = []; // store all markers globally
+
+    async function fetchBins(center) {
+      // Clear previous markers
+      markers.forEach(m => m.setMap(null));
+      markers = [];
+
+      const queries = [
+        { text: "Green bin", color: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" },
+        { text: "Blue bin",  color: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" },
+        { text: "Red bin",   color: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" },
+        { text: "Dustbin",   color: "http://maps.google.com/mapfiles/ms/icons/yellow-dot.png" },
+        { text: "Recycling", color: "http://maps.google.com/mapfiles/ms/icons/purple-dot.png" }
+      ];
+
+      for (let q of queries) {
+        try {
+          let response = await fetch("https://google-map-places-new-v2.p.rapidapi.com/v1/places:searchText", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-RapidAPI-Key": "3227bc10cfmshfd7f06aac84e54dp139ff9jsn2e0521d01dee",
+              "X-RapidAPI-Host": "google-map-places-new-v2.p.rapidapi.com",
+              "X-Goog-FieldMask": "*"
+            },
+            body: JSON.stringify({
+              textQuery: q.text,
+              locationBias: {
+                circle: {
+                  center: { latitude: center.lat(), longitude: center.lng() },
+                  radius: 8000
+                }
+              },
+              maxResultCount: 20
+            })
+          });
+
+          let data = await response.json();
+          console.log(`Results for ${q.text}:`, data);
+
+          if (data.places && data.places.length > 0) {
+            data.places.forEach(place => {
+              if (place.location) {
+                let lat = place.location.latitude;
+                let lng = place.location.longitude;
+                let name = place.displayName?.text || q.text;
+                let marker = new google.maps.Marker({
+                  position: { lat, lng },
+                  map: map,
+                  title: `${q.text} - ${name}`,
+                  icon: q.color
+                });
+                let infowindow = new google.maps.InfoWindow({
+                  content: `<b>${name}</b><br>Type: ${q.text}`
+                });
+                marker.addListener("click", () => {
+                  infowindow.open(map, marker);
+                });
+                markers.push(marker);
+              }
+            });
+          }
+        } catch (error) {
+          console.error(`Error fetching ${q.text}:`, error);
+          alert("Oops! Something went wrong while fetching bins.");
+        }
+      }
+    }
+
+    function initMap() {
+      const bhopal = { lat: 23.2599, lng: 77.4126 };
+      map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 13,
+        center: bhopal
+      });
+
+      // Add SearchBox
+      const input = document.getElementById("pac-input");
+      const searchBox = new google.maps.places.SearchBox(input);
+      map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+      map.addListener("bounds_changed", () => {
+        searchBox.setBounds(map.getBounds());
+      });
+      searchBox.addListener("places_changed", () => {
+        const places = searchBox.getPlaces();
+        if (!places || places.length === 0) return;
+        const bounds = new google.maps.LatLngBounds();
+        places.forEach(place => {
+          if (!place.geometry || !place.geometry.location) return;
+          bounds.extend(place.geometry.location);
+          // Fetch bins for new location
+          fetchBins(place.geometry.location);
+        });
+        map.fitBounds(bounds);
+      });
+
+      // Initial load of bins
+      fetchBins(new google.maps.LatLng(bhopal.lat, bhopal.lng));
+
+      // Legend
+      const legend = document.getElementById("legend");
+      const queries = [
+        { text: "Green bin", color: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" },
+        { text: "Blue bin",  color: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" },
+        { text: "Red bin",   color: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" },
+        { text: "Dustbin",   color: "http://maps.google.com/mapfiles/ms/icons/yellow-dot.png" },
+        { text: "Recycling", color: "http://maps.google.com/mapfiles/ms/icons/purple-dot.png" }
+      ];
+      queries.forEach(q => {
+        let div = document.createElement("div");
+        div.innerHTML = `<img src="${q.color}"> ${q.text}`;
+        legend.appendChild(div);
+      });
+      map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(legend);
+    }
+  </script>
+</head>
+<body>
+  <h2>Smart Waste Bins in Bhopal</h2>
+  <input id="pac-input" class="controls" type="text" placeholder="Search area in Bhopal">
+  <div id="map"></div>
+  <div id="legend"><h3>Legend</h3></div>
+</body>
+</html> -->
