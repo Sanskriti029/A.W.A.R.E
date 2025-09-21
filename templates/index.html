@@ -364,6 +364,23 @@
   border: none;
   display: block;
 }
+/* Make <a> inside sidebar li look like li text */
+.sidebar ul li a {
+  color: white;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  font-weight: 600;
+}
+
+.sidebar ul li a:hover {
+  background: #13856e;
+  padding-left: 2.1rem;
+  border-radius: 4px;
+}
+
 
   </style>
 <body>
@@ -381,7 +398,9 @@
         <li class="protected" onclick="showSection('leaderboard')">Leaderboard</li>
       </ul>
     </li>
-    <li class="protected" onclick="showSection('map-section')">🗺 Map</li>
+    <li class="protected"><a href="/map"><span>📖</span> Recycling Centers </a></li>
+
+    <!-- <li class="protected" onclick="showSection('map-section')">🗺 Map</li> -->
     <li class="protected" onclick="showSection('information')">ℹ️ Information</li>
     <li onclick="showSection('about-us')">👥 About Us</li>
     <li onclick="showSection('contact-us')">📩 Contact Us</li>
@@ -434,6 +453,9 @@
   <p id="result"></p>
   <p id="wasteType"></p>
   <p id="recyclingProcess"></p>
+  <!-- Inside <section id="classifier"> -->
+<!-- <button id="goToCentersBtn" style="margin-top:10px; background:#f39c12;">Find Recycling Centers</button> -->
+
   <button id="viewBinBtn" style="display:none;">View Bin Info</button>
 
   <!-- Bin Info Modal -->
@@ -444,7 +466,7 @@
       <h3 id="binModalTitle"></h3>
       <p id="binModalDesc"></p>
     </div>
-  </div>
+  </div> 
 </section>
 
 
@@ -495,7 +517,7 @@
       <button onclick="findCenters()">Find Recycling Centers</button>
       
     </section> -->
-<section id="map-section">
+<!-- <section id="map-section">
   <h2>Nearby Recycling Centers</h2>
   <input type="text" id="locationSearch" placeholder="Enter city or area name">
   <button onclick="searchLocation()">Search Location</button>
@@ -507,10 +529,10 @@
     <option value="Glass Waste">Glass Waste</option>
     <option value="Metal Waste">Metal Waste</option>
     <option value="E-Waste">E-Waste</option>
-  </select>
+  </select> -->
 
   <!-- ✅ Google Maps Embed Only -->
-  <div class="map-embed">
+  <!-- <div class="map-embed">
     <iframe 
       src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d234700.90002902807!2d77.24107900392008!3d23.199323871704177!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x397c428f8fd68fbd%3A0x2155716d572d4f8!2sBhopal%2C%20Madhya%20Pradesh!5e0!3m2!1sen!2sin!4v1758211734687!5m2!1sen!2sin" 
       width="100%" 
@@ -521,9 +543,9 @@
       referrerpolicy="no-referrer-when-downgrade">
     </iframe>
   </div>
-</section>
+</section>-->
 
-   <section id="information">
+   <section id="information"> 
     <h2>♻️ Dustbin Information Guide</h2>
     <p>Different colored bins are used for proper waste segregation. Here’s a quick guide:</p>
     <div class="bin-info">
@@ -633,58 +655,12 @@ const binColors = {
   metal: "Yellow Bin",
   general: "Black Bin"
 };
-  let lastWasteType = "general";
+  let lastWasteType = "";
 let lastHighlightedBin = null;
 
-async function classifyImage() {
-  if (!window.isLoggedIn) { 
-    alert("⚠️ Please log in first."); 
-    showSection("Login"); 
-    return; 
-  }
-  
-  const fileInput = document.getElementById("imageUpload");
-  const out = document.getElementById("result");
-  const wasteType = document.getElementById("wasteType");
-  const recyclingProcess = document.getElementById("recyclingProcess");
-  const classifyBtn = document.getElementById("classifyBtn");
 
-  if (!fileInput.files.length) { 
-    out.innerText = "Please upload an image."; 
-    return; 
-  }
-
-  classifyBtn.disabled = true;
-  classifyBtn.textContent = "Classifying...";
-  out.innerText = "Classifying...";
-
-  const formData = new FormData(); 
-  formData.append("file", fileInput.files[0]);
-
-  try {
-    const response = await fetch("/predict", { method: "POST", body: formData, credentials: "include" });
-    const data = await response.json();
-
-    if (response.ok) {
-      const binName = data.dustbin || "Unknown Bin";
-      const binColor = binColors[binName] || "Unknown Color";
-
-      out.innerHTML = `Detected Waste Category: <strong>${data.prediction}</strong>`;
-      wasteType.innerHTML = `Waste Type: <strong>${data.waste_type}</strong>`;
-      recyclingProcess.innerHTML = `Bin Color: <strong>${binColor}</strong>`;
-      lastWasteType = data.waste_type;
-      highlightBin(binName);
-    } else {
-      out.innerText = "Error: " + (data.error || "Failed");
-    }
-  } catch (err) { 
-    out.innerText = "Error: " + err.message; 
-  } finally { 
-    classifyBtn.disabled = false; 
-    classifyBtn.textContent = "Classify Waste"; 
-  }
-}
-document.getElementById("classifyBtn").addEventListener("click", e => { e.preventDefault(); classifyImage(); });
+// Duplicate immediate classification block removed because it used top-level await and had an unmatched closing.
+// Classification is handled via the classifyImage() async function and its event listeners defined later.
 
 // Highlight bin
 function highlightBin(binName) {
@@ -708,7 +684,7 @@ const binModalDesc = document.getElementById("binModalDesc");
 const closeBinModal = document.getElementById("closeBinModal");
 
 document.getElementById("viewBinBtn").addEventListener("click", () => {
-  if (!lastHighlightedBin) return alert("No bin selected!");
+  // if (!lastHighlightedBin) return alert("No bin selected!");
   binModalTitle.innerHTML = lastHighlightedBin.querySelector("h3").innerHTML;
   binModalDesc.innerHTML = lastHighlightedBin.querySelector("p").innerHTML;
   binInfoModal.style.display = "flex";
@@ -770,10 +746,10 @@ logoutBtn?.addEventListener("click", () => {
 });
 
 // Notifications toggle
-notificationsBtn?.addEventListener("click", (e) => {
-  e.stopPropagation();
-  notificationsPanel.style.display = notificationsPanel.style.display === "block" ? "none" : "block";
-});
+// notificationsBtn?.addEventListener("click", (e) => {
+//   e.stopPropagation();
+//   notificationsPanel.style.display = notificationsPanel.style.display === "block" ? "none" : "block";
+// });
 function showToast(message) {
   const container = document.getElementById("toastContainer");
   const toast = document.createElement("div");
@@ -923,6 +899,13 @@ async function loginUser() {
       updateUserIndicator();
       showSection("home");
       document.getElementById("sidebar").classList.add("open");
+
+       // ✅ Add login notification
+      addNotification(`Welcome back, ${window.currentUsername}! 🎉`);
+
+      // ✅ Start waste fact notifications
+      startWasteFactNotifications(30000); // every 30s
+
     } else alert("❌ " + (data.error || "Login failed"));
   } catch (err) { alert("Error: " + err.message); }
 }
@@ -1031,10 +1014,10 @@ async function classifyImage() {
       wasteType.innerHTML = `Waste Type: <strong>${data.waste_type}</strong>`;
 
       // 🔑 Get bin color instead of recycling process
-      const binName = data.dustbin?.toLowerCase() || "general";
-      const binColor = binColors[binName] || "Black Bin";
+     // const binName = data.dustbin?.toLowerCase() || "general";
+     // const binColor = binColors[binName] || "Black Bin";
 
-      recyclingProcess.innerHTML = `Recycling Process: <strong>Recycle in ${binColor}</strong>`;
+      //recyclingProcess.innerHTML = `Recycling Process: <strong>Recycle in ${binColor}</strong>`;
 
       lastWasteType = (typeof data.waste_type === "string" && data.waste_type.trim() !== "") ? data.waste_type : "general";
 
@@ -1093,13 +1076,28 @@ function goToBinInfo() {
     return;
   }
 
-  // Find the matching bin card
+  // ✅ Map waste type → bin
+  const typeToBin = {
+    "plastic waste": "Blue Bin",
+    "paper waste": "Blue Bin",
+    "glass waste": "Blue Bin",
+    "metal waste": "Yellow Bin",
+    "organic waste": "Green Bin",
+    "e-waste": "Red Bin",
+    "hazardous waste": "Red Bin",
+    "general": "Black Bin"
+  };
+
+  const binName = typeToBin[lastWasteType.toLowerCase()] || null;
+
   let targetBin = null;
-  document.querySelectorAll(".bin-card").forEach(card => {
-    if (card.querySelector("h3").textContent.toLowerCase().includes(lastWasteType.toLowerCase())) {
-      targetBin = card;
-    }
-  });
+  if (binName) {
+    document.querySelectorAll(".bin-card").forEach(card => {
+      if (card.querySelector("h3").textContent.includes(binName)) {
+        targetBin = card;
+      }
+    });
+  }
 
   if (!targetBin) {
     binModalContent.innerHTML = `
@@ -1116,7 +1114,7 @@ function goToBinInfo() {
   const description = targetBin.querySelector("p").textContent;
   const imgSrc = targetBin.querySelector("img")?.src || "";
 
-  // Build modal content with dustbin usage
+  // Build modal content
   binModalContent.innerHTML = `
     <h2 style="color:${borderColor}; margin-bottom:10px;">${title}</h2>
     <img src="${imgSrc}" alt="${title}" style="width:80px; margin:10px 0;">
@@ -1126,15 +1124,9 @@ function goToBinInfo() {
     </p>
   `;
 
-  // Apply styling to modal
-  const modalBox = binModal.querySelector(".modal-content");
-  if (modalBox) {
-    modalBox.style.borderLeftColor = borderColor;
-    modalBox.style.boxShadow = `0 5px 15px ${borderColor}44`;
-  }
-
   binModal.style.display = "block";
 }
+
 
 // Close modal on X click
 if (binCloseBtn) binCloseBtn.onclick = () => binModal.style.display = "none";
@@ -1209,9 +1201,32 @@ window.addEventListener("load", () => {
   }
 });
 
+
+document.getElementById("goToCentersBtn").addEventListener("click", () => {
+  if (!window.isLoggedIn) {
+    alert("⚠️ Please log in first to access recycling centers.");
+    showSection("Login");
+    return;
+  }
+
+  // Redirect to the map section
+  // showSection("map-section");
+ window.location.href = "/api/recycling-centers";
+  // Optional: focus on last classified waste type in filter
+  // const wasteFilter = document.getElementById("wasteFilter");
+  // if (lastWasteType) {
+  //   wasteFilter.value = lastWasteType;
+  // }
+
+  // Optionally, trigger finding centers automatically
+  // findCenters();
+});
+
 </script>
 
 
 
 </body>
 </html>
+
+
