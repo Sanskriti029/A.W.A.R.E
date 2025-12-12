@@ -226,11 +226,9 @@
   padding: 0.5rem 0;
   border-bottom: 1px solid #f1f1f1;
 }
-
 .notifications-panel ul li:last-child {
   border-bottom: none;
 }
-
 #accountDropdown li {
   padding: 0.5rem 1rem;
   cursor: pointer;
@@ -403,7 +401,7 @@
     <!-- <li class="protected" onclick="showSection('map-section')">🗺 Map</li> -->
     <li class="protected" onclick="showSection('information')">ℹ️ Information</li>
     <li onclick="showSection('about-us')">👥 About Us</li>
-    <!-- <li onclick="showSection('contact-us')">📩 Contact Us</li> -->
+    <li onclick="showSection('contact-us')">📩 Contact Us</li>
   </ul>
 </div>
 
@@ -442,8 +440,26 @@
     <input type="password" id="loginPassword" placeholder="Password" required />
     <button type="submit">Login</button>
     <p style="text-align:center; margin-top:8px;">Don't have an account? <a href="#register" onclick="showSection('register')">Register</a></p>
+    <p style="text-align:center; margin-top:8px;">
+  <a href="#" id="forgotPasswordLink">Forgot Password?</a>
+</p>
+
   </form>
+
   <p id="loginStatus" style="text-align:center;"></p>
+</section>
+
+<section id="forgotPassword" class="auth">
+  <h2>Forgot Password</h2>
+  <form onsubmit="event.preventDefault(); resetPassword();">
+    <input type="email" id="fpEmail" placeholder="Enter your email" required />
+    <input type="password" id="fpNewPassword" placeholder="Enter new password" required />
+    <button type="submit">Reset Password</button>
+    <p style="text-align:center; margin-top:8px;">
+      Remembered your password? <a href="#" id="backToLoginLink">Login</a>
+    </p>
+  </form>
+  <p id="fpStatus" style="text-align:center; color: red;"></p>
 </section>
 
    <section id="classifier">
@@ -483,6 +499,13 @@
         <input type="email" id="regEmail" placeholder="Email" required />
         <input type="password" id="regPassword" placeholder="Password" required />
         <button type="submit">Register</button>
+   <p style="text-align:center; margin-top:8px;">
+  Already have an account? 
+  <a href="#" id="goToLoginLink">Login</a>
+</p>
+
+
+
       </form>
     </section>
 
@@ -596,16 +619,22 @@
   </section>
     </section>
 
-     <!-- <section id="contact-us">
-      <h2>Contact Us</h2>
-      <p>Reach us at <strong>support@aware.com</strong></p>
-      <form onsubmit="event.preventDefault(); alert('Message sent!');">
-        <input type="text" placeholder="Name" required>
-        <input type="email" placeholder="Email" required>
-        <textarea placeholder="Message" required></textarea>
+      <section id="contact-us">
+    <h2>Contact Us</h2>
+    <p>Reach us at <strong>aware.sup@gmail.com</strong></p>
+
+    <!-- Add class gform and action to handle form submission -->
+    <form class="gform" method="POST" data-sheet="responses" action="https://script.google.com/macros/s/AKfycbwVLsXcGO8gkVYlv3jzGHZahc-e_pNwiuijgBEX1F0HD1fwhRMGK2Am9w9cfAeYFQAT/exec">
+      <div class="form-elements">
+        <input type="text" name="name" placeholder="Name" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <textarea name="message" placeholder="Message" required></textarea>
         <button type="submit">Send Message</button>
-      </form>
-    </section> -->
+      </div>
+
+     
+    </form>
+  </section>
     <!-- Removed duplicate leaderboard section to fix id conflict -->
    <section id="about-us">
       <h2>About Us</h2>
@@ -885,10 +914,14 @@ async function registerUser() {
     });
     const data = await res.json();
     if (res.ok) {
+      alert("✅ Registration successful! Please log in.");
       showSection("Login");
     } else alert("❌ " + (data.error || "Registration failed"));
   } catch (err) { alert("Error: " + err.message); }
+
 }
+
+
 
 async function loginUser() {
   const username = document.getElementById("loginUsername").value;
@@ -961,6 +994,64 @@ window.addEventListener("load", async () => {
   await checkAuth(); // sets window.isLoggedIn and currentUsername
   document.getElementById("appContainer").style.display = "block"; // show content only after auth check
 });
+// "Already have an account? Login" link in register section
+const goToLoginLink = document.getElementById("goToLoginLink");
+if (goToLoginLink) {
+  goToLoginLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    showSection("Login"); // Use your existing section toggle function
+  });
+}
+
+// Show Forgot Password section
+const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+const backToLoginLink = document.getElementById("backToLoginLink");
+
+if (forgotPasswordLink) {
+  forgotPasswordLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    showSection("forgotPassword");
+  });
+}
+
+if (backToLoginLink) {
+  backToLoginLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    showSection("Login");
+  });
+}
+
+
+
+async function resetPassword() {
+  const email = document.getElementById("fpEmail").value;
+  const newPassword = document.getElementById("fpNewPassword").value;
+  const status = document.getElementById("fpStatus");
+
+  try {
+    const res = await fetch("/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, newPassword }),
+      credentials: "include"
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      status.style.color = "green";
+      status.innerText = "✅ Password reset successfully! Please login.";
+      setTimeout(() => showSection("Login"), 2000);
+    } else {
+      status.style.color = "red";
+      status.innerText = "❌ " + (data.error || "Failed to reset password");
+    }
+  } catch (err) {
+    status.style.color = "red";
+    status.innerText = "Error: " + err.message;
+  }
+}
+
+
 
 // --- GUIDE ---
 function searchMaterial(query) {
@@ -1231,6 +1322,46 @@ document.getElementById("goToCentersBtn").addEventListener("click", () => {
 });
 
 </script>
+<script src="https://script.google.com/macros/s/AKfycbwVLsXcGO8gkVYlv3jzGHZahc-e_pNwiuijgBEX1F0HD1fwhRMGK2Am9w9cfAeYFQAT/exec"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-G9QM9CXG0L');
+  </script>
+  <script>
+    function doPost(e) {
+  try {
+    // Open the Google Sheet using its ID
+    var ss = SpreadsheetApp.openById("YOUR_SHEET_ID"); // replace with your Sheet ID
+    var sheet = ss.getSheetByName("responses"); // make sure this matches your form's data-sheet
+
+    // Parse the form data
+    var params = e.parameter;
+    var headers = Object.keys(params);
+    
+    // If the sheet is empty, add headers
+    if(sheet.getLastRow() === 0){
+      sheet.appendRow(headers);
+    }
+
+    // Add the form submission as a new row
+    var row = headers.map(function(header){
+      return params[header];
+    });
+    sheet.appendRow(row);
+
+    // Return a success response
+    return ContentService.createTextOutput(JSON.stringify({"result":"success"}))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch(error) {
+    return ContentService.createTextOutput(JSON.stringify({"result":"error","error":error}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+  </script>
 
 
 
