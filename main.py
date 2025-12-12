@@ -1,3 +1,4 @@
+
 from flask import Flask, request, jsonify, render_template, session
 from PIL import Image
 import numpy as np
@@ -9,13 +10,20 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from flask_sqlalchemy import SQLAlchemy
 
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+# -----------------------------
+# App setup
+# -----------------------------
 app = Flask(__name__, template_folder="templates")
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 CORS(app, supports_credentials=True)
 
-# ============================
-# DATABASE (Leaderboard)
-# ============================
+# -----------------------------
+# Database setup
+# -----------------------------
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///leaderboard.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -29,9 +37,9 @@ class Leaderboard(db.Model):
 with app.app_context():
     db.create_all()
 
-# ============================
-# AI Model Loading
-# ============================
+# -----------------------------
+# Load AI Model
+# -----------------------------
 model = tf.keras.models.load_model("trashnet_model.h5")
 target_size = (224, 224)
 
@@ -67,17 +75,17 @@ RECYCLING_CENTERS = [
     {"name": "Nearby Plant", "lat": 23.2000, "lng": 77.5000}
 ]
 
-
-# ============================
-# User Storage (JSON)
-# ============================
+# -----------------------------
+# User Storage
+# -----------------------------
 USERS_FILE = "users.json"
+
 def load_users():
     if os.path.exists(USERS_FILE):
         with open(USERS_FILE, "r") as f:
             try:
                 return json.load(f)
-            except Exception:
+            except:
                 return {}
     return {}
 
@@ -85,9 +93,9 @@ def save_users(users):
     with open(USERS_FILE, "w") as f:
         json.dump(users, f, indent=2)
 
-# ============================
+# -----------------------------
 # Helpers
-# ============================
+# -----------------------------
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -129,13 +137,12 @@ def update_user_score(username, points_earned):
         user.correct_classifications += 1
     db.session.commit()
 
-# ============================
+# -----------------------------
 # Routes
-# ============================
+# -----------------------------
 @app.route("/")
 def home():
     return render_template("index.html")
-
 
 # ---- Auth ----
 @app.route("/register", methods=["POST"])
@@ -159,32 +166,74 @@ def register_user():
 @app.route("/login", methods=["POST"])
 def login_user():
     data = request.json or {}
-    username = (data.get("username") or "").strip()
+    identifier = (data.get("username") or data.get("email") or "").strip()
     password = data.get("password") or ""
 
     users = load_users()
-    user = users.get(username)
+    user = None
+    username = None
+
+    # Match username or email
+    if identifier in users:
+        username = identifier
+        user = users[username]
+    else:
+        for uname, udata in users.items():
+            if udata.get("email") == identifier:
+                username = uname
+                user = udata
+                break
+
     if not user or not check_password_hash(user.get("password", ""), password):
         return jsonify({"error": "Invalid credentials"}), 401
 
     session["username"] = username
     return jsonify({"message": "Login successful!", "username": username}), 200
 
-@app.route("/logout", methods=["POST"])
-def logout_user():
-    session.pop("username", None)
-    return jsonify({"message": "Logged out"}), 200
 
-@app.route("/me")
-def get_current_user():
-    username = session.get("username")
-    if not username:
-        return jsonify({"username": None})
+@app.route("/reset-password", methods=["POST"])
+def reset_password():
+    """
+    JSON input:
+    {
+        "email": "user@example.com",
+        "newPassword": "newpass123"
+    }
+    """
+    data = request.get_json(force=True)
+    email = (data.get("email") or "").strip()
+    new_password = data.get("newPassword") or ""
+
+    if not email or not new_password:
+        return jsonify({"error": "Email and new password are required"}), 400
+
+    # Reload users fresh
     users = load_users()
-    user = users.get(username, {})
-    return jsonify({"username": username, "email": user.get("email")})
+    user_found = None
+
+    # Find user by email
+    for username, udata in users.items():
+        if udata.get("email") == email:
+            user_found = username
+            break
+
+    if not user_found:
+        return jsonify({"error": "Email not found"}), 404
+
+    # Update password hash
+    users[user_found]["password"] = generate_password_hash(new_password)
+
+    # Save immediately
+    save_users(users)
+
+    return jsonify({"message": f"Password reset successful for {user_found}!"}), 200
 
 
+@app.route("/logout", methods=["POST"])
+@login_required
+def logout():
+    session.pop("username", None)
+    return jsonify({"message": "Logged out successfully"}), 200
 
 # ---- Prediction ----
 @app.route("/predict", methods=["POST"])
@@ -197,7 +246,6 @@ def predict():
         prediction = predict_image(img)
         waste_info = get_waste_info(prediction)
 
-        # Update leaderboard
         points = calculate_points(waste_info["type"])
         update_user_score(session["username"], points)
 
@@ -210,15 +258,6 @@ def predict():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-@app.route('/map')
-def map_view():
-    return render_template("map.html")
-
-@app.route('/api/recycling-centers')
-def recycling_centers():
-    return jsonify(RECYCLING_CENTERS)
-
 # ---- Leaderboard ----
 @app.route("/api/leaderboard", methods=["GET"])
 def get_leaderboard():
@@ -227,7 +266,30 @@ def get_leaderboard():
               for i, u in enumerate(top_users)]
     return jsonify(result)
 
-# ---- Nearby Recycling Centers ----
+# ---- Check Auth ----
+@app.route("/check-auth", methods=["GET"])
+def check_auth():
+    username = session.get("username")
+    if username:
+        users = load_users()
+        user = users.get(username, {})
+        return jsonify({
+            "loggedIn": True,
+            "username": username,
+            "email": user.get("email")
+        })
+    return jsonify({"loggedIn": False})
+
+# ---- Recycling Centers ----
+@app.route('/map')
+def map_view():
+    return render_template("map.html")
+
+@app.route('/api/recycling-centers')
+def recycling_centers():
+    return jsonify(RECYCLING_CENTERS)
+
+# ---- Nearby Recycling ----
 @app.route("/nearby")
 @login_required
 def nearby():
@@ -237,7 +299,6 @@ def nearby():
     if not lat or not lon:
         return jsonify({"error": "Missing latitude/longitude"}), 400
     try:
-        # Overpass API
         import requests
         query = f"""
         [out:json];
@@ -264,22 +325,61 @@ def nearby():
         return jsonify({"centers": centers})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+# ---- Contact Us ----
 
-@app.route("/check-auth", methods=["GET"])
-def check_auth():
-    username = session.get("username")
-    if username:
-        users = load_users()
-        user = users.get(username, {})
-        return jsonify({
-            "loggedIn": True,
-            "username": username,
-            "email": user.get("email")
-        })
-    return jsonify({"loggedIn": False})
+# # Configure your email credentials
+SMTP_SERVER = "smtp.gmail.com"   # or your SMTP server
+SMTP_PORT = 587
+EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS")  # sender email
+EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")  # sender password or app password
 
-# ============================
+@app.route("/contact", methods=["POST"])
+def contact_us():
+    data = request.get_json(force=True)
+    name = (data.get("name") or "").strip()
+    email = (data.get("email") or "").strip()
+    message = (data.get("message") or "").strip()
+
+    if not name or not email or not message:
+        return jsonify({"error": "All fields are required"}), 400
+
+    # Save message to file (optional)
+    CONTACT_FILE = "contacts.json"
+    if os.path.exists(CONTACT_FILE):
+        with open(CONTACT_FILE, "r") as f:
+            contacts = json.load(f)
+    else:
+        contacts = []
+
+    contacts.append({"name": name, "email": email, "message": message})
+    with open(CONTACT_FILE, "w") as f:
+        json.dump(contacts, f, indent=2)
+
+    # Send email to support
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = EMAIL_ADDRESS
+        msg['To'] = "aware.sup@gmail.com"
+        msg['Subject'] = f"Contact Form Message from {name}"
+
+        body = f"Name: {name}\nEmail: {email}\n\nMessage:\n{message}"
+        msg.attach(MIMEText(body, 'plain'))
+
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+    except Exception as e:
+        return jsonify({"error": f"Failed to send email: {str(e)}"}), 500
+
+    return jsonify({"message": "Your message has been sent! Thank you."}), 200
+
+# -----------------------------
+# Run App
+# -----------------------------
 if __name__ == "__main__":
     if not os.path.exists(USERS_FILE):
         save_users({})
     app.run(host="0.0.0.0", port=5000, debug=True)
+
