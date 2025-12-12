@@ -4,3 +4,33 @@
     "password": "scrypt:32768:8:1$8qqCdxHeiYgLl72P$4bd10ebbf297749b2f6c387adebc40bfadc89867f8204fcb89a40d00d743e2268ff0bd18125e96321c9f9bec6bff8c5c224e3b563f3d02fc19093a83e6007b36"
   }
 }
+{
+  "user": {
+    "email": "user@gmail.com",
+    "password": "scrypt:32768:8:1$tqrMBSavtvUnXwgv$28539ea190aac251376f0717e47347ca0d194bed28e0a6f1ea8d312141cd2cd2e426e0dea70e62ba997b6bb5cb2c9eb496aec23981f607072d3c47a3cca73475"
+  },
+  "user2": {
+    "email": "12@gmail.com",
+    "password": "scrypt:32768:8:1$aw4j5qhNZBqKKCoN$68ac22320a6a665fdb5e98bbe6214464c59d6d6c818b561d14e498941fd20f3191b0e1e9bb353d2e27b304eed52d69e2f76076210bd89210e7dd72336ec123bf"
+  },
+  "User": {
+    "email": "demo@gmail.com",
+    "password": "scrypt:32768:8:1$RFw4BL9JZdq5skbv$92d20c6d100f5340fbc125cc4fbc39ce64c18e8e6ecd6078884ad4822b988fc66b4b18886bded45ce3cf77266cdef4872b13e04f94bbf0dca1f452419cecc83b"
+  },
+  "ravi0011": {
+    "email": "ravi.verma0099@gmail.com",
+    "password": "scrypt:32768:8:1$f2j2b8qiBTzZAehv$b5b68c86899e996839c75992597def3697ef1e07bce831bc981d20298f54500a2e1292265d64655fd562024846138abb4139d17c9c9922ebb33fbe6609c68004"
+  },
+  "unknown": {
+    "email": "coding300807@gmail.com",
+    "password": "scrypt:32768:8:1$Q3IuQoIhryowFH3c$95690594658f21d00a07757fb97c1f1cc89eea584dcc61d3b91e2d26fab7da48d2bd88a918582f7b86ea2abd3e8362387ff843bb8bf8fdb390c009a8d26816a5"
+  },
+  "dhirya": {
+    "email": "dsj@gmail.com",
+    "password": "scrypt:32768:8:1$KNMnoAQf6HopY8Yj$06815522454d8b2847d12dd35c7623ade81e69b7c42df649ac7d0962ae04f67930362b6cfb7aaf2232fa63dcbd2a36291cb29059c2409f2a8f5d27ebca5013ba"
+  },
+  "demo1": {
+    "email": "demo1@gmail.com",
+    "password": "scrypt:32768:8:1$9XDtndRLGMvech4d$5c5243708667e0a68bf9e9b8a5ad5ea5987751290116bcfd6d086008d1a32209ea7645bc6674b280d93778059f11632a5bbcdd6b209c8e237ec750333f000c3f"
+  }
+}
