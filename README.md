@@ -1,7 +1,7 @@
 # Aware 🌱
 
 **Aware** is a waste management and community awareness application designed to promote responsible waste disposal, recycling, and sustainable living. The app connects users, communities, and organizations to classify waste using AI, share updates, and encourage environmentally friendly practices.
-
+  
 ---
 
 ## 🚀 Features
