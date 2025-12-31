@@ -111,7 +111,7 @@ This project is licensed under the **MIT License**.
 
 For questions or suggestions:
 
-* **Project Name:** Aware
+* **Project Name:** A.W.A.R.E -Artifiial Waste and Recycling Engine
 * **GitHub:** [https://github.com/Sanskriti029](https://github.com/Sanskriti029)
 
 ---
