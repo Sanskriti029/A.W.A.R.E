@@ -1,4 +1,4 @@
-# Aware 🌱
+# A.W.A.R.E -Artificial Waste and Recyling Engine 🌱
 
 **Aware** is a waste management and community awareness application designed to promote responsible waste disposal, recycling, and sustainable living. The app connects users, communities, and organizations to classify waste using AI, share updates, and encourage environmentally friendly practices.
   
@@ -19,7 +19,7 @@
 * **Frontend:** HTML, CSS, JavaScript
 * **Backend:** Flask (Python)
 * **AI / ML:** Python (custom trained model)
-* **Authentication:** JWT / Firebase Authentication
+* **Authentication:** JSON
 
 ---
 
