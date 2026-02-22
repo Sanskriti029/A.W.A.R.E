@@ -1,27 +1,77 @@
-# A.W.A.R.E -Artificial Waste and Recyling Engine 🌱
+# A.W.A.R.E
 
-**Aware** is a waste management and community awareness application designed to promote responsible waste disposal, recycling, and sustainable living. The app connects users, communities, and organizations to classify waste using AI, share updates, and encourage environmentally friendly practices.
-  
+## Artificial Waste and Recyling Engine 🌱
+
+**A.W.A.R.E** is an AI-powered waste management and awareness web application designed to promote responsible waste disposal and recycling.
+It allows users to classify waste using a trained deep learning model, view recycling guidance, track leaderboard scores, and locate nearby recycling centers using an interactive map.
+
 ---
 
 ## 🚀 Features
 
-* 🗑️ **AI Waste Classification** – Automatically classify waste into categories using an AI/ML model.
-* 🌍 **Community Posts** – Share updates, announcements, and sustainability tips within the community.
-* ♻️ **Leaderboard** – Encourage eco-friendly habits by ranking users based on sustainable actions.
-* 📊 **Dustbin Information** – View statistics related to dustbin usage, waste levels, and participation.
-* 🔔 **Notifications** – Receive updates on community activities, events, and waste pickup schedules.
-* 🗺️ **Recycling Centre** – Locate nearby recycling centres on an interactive maplocation services.
+* **🗑️ AI Waste Classification** – Upload an image of waste and get its category using a trained CNN model
+
+* **♻️ Recycling Guide** – Shows correct dustbin color and recycling process
+
+* **🏆 Leaderboard System** – Users earn points for correct classifications
+
+* **👤 User Authentication** – Register, login, logout, and reset password
+
+* **🌍 Recycling Centers Map**– Interactive map using Leaflet
+
+* **🔔 Notifications** – Eco-facts and activity alerts
+
+* **🌐 Community Section** – Share sustainability tips
+
+* **📊 Dustbin Information**– Helps in proper waste segregation
+
 ---
 
 ## 🛠️ Tech Stack
 
-* **Frontend:** HTML, CSS, JavaScript
-* **Backend:** Flask (Python)
-* **AI / ML:** Python (custom trained model)
-* **Authentication:** JSON
+🛠️ Tech Stack
 
----
+*Frontend:*
+
+*  HTML, CSS, JavaScript
+
+_Backend:_
+
+*  Flask (Python)
+
+_AI / ML:_
+
+*   TensorFlow (CNN model)
+
+* Trained using Kaggle dataset
+
+_Database & Storage:_
+
+*  SQLite (Leaderboard)
+
+*  JSON (User data & labels)
+
+_Map:_
+
+*  Leaflet (OpenStreetMap)
+
+## 🧩 Folder Structure
+
+```text
+A.W.A.R.E/
+│
+├── templates/
+│   └── index.html
+├── static/
+│   └── images/
+├── train_model.py
+├── main.py
+├── labels.json
+├── users.json
+├── trashnet_model.h5
+├── requirements.txt
+└── README.md
+````
 
 ## 📦 Installation
 
@@ -29,6 +79,7 @@
 
    ```bash
    git clone https://github.com/Sanskriti029/A.W.A.R.E.git
+
    ```
 
 2. Navigate to the project folder:
@@ -41,7 +92,7 @@
 
    ```bash
    python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   source venv/bin/activate   # On Windows: venv\Scripts\activate
    ```
 
 4. Install dependencies:
@@ -58,36 +109,67 @@
 
 ---
 
-## ⚙️ Configuration
+### 🧠Model Training (Optional – if you want to retrain)
 
-Create a `.env` file in the root directory and add the required environment variables:
+This project uses a custom-trained CNN model.
 
-```env
-API_KEY=your_api_key
-FLASK_ENV=development
-PORT=3000
+_Dataset_
+
+Download a waste classification dataset from Kaggle
+(example: TrashNet or Garbage Classification Dataset)
+
+*  Place the dataset in this structure:
+
+```bash
+dataset/
+├── train/
+└── test/
 ```
 
----
+**Train the model**
 
+```bash
+python train_model.py
+```
+This will generate:
 
+* trashnet_model.h5
 
-## 🧩 Folder Structure
+* labels.json
 
-```text
-aware/
-├── templates/
-├── static/
-│   └── images/
-├── labels.json
-├── user.json
-├── train_model.py
-├── main.py
-├── README.md
-└── requirements.txt
+**▶️ Run the Application**
+```bash
+python main.py
 ```
 
----
+Then open in your browser:
+```
+http://127.0.0.1:5000/
+```
+
+**🗺️ Map Integration**
+
+The project uses Leaflet (OpenStreetMap) for recycling center locations.
+✅ No API key is required.
+
+
+## 📸 How It Works
+
+1. User uploads a waste image
+
+2. AI model predicts waste type
+
+3. App displays:
+
+ *  Waste category
+
+ * Recycling process
+
+* Dustbin color
+
+4. User earns points
+
+5. Leaderboard updates automatically
 
 ## 🤝 Contributing
 
@@ -111,9 +193,10 @@ This project is licensed under the **MIT License**.
 
 For questions or suggestions:
 
-* **Project Name:** A.W.A.R.E -Artifiial Waste and Recycling Engine
-* **GitHub:** [https://github.com/Sanskriti029](https://github.com/Sanskriti029)
+- **Project Name:** A.W.A.R.E -Artifiial Waste and Recycling Engine
+- **GitHub:** [https://github.com/Sanskriti029](https://github.com/Sanskriti029)
 
 ---
 
-> *Together, let’s build a cleaner and more sustainable future with Aware.* 🌿
+> _Together, let’s build a cleaner and more sustainable future with Aware._ 🌿
+
