@@ -1,7 +1,7 @@
 Flask
 numpy
 pandas
-opencv-python
+
 Pillow
 scikit-learn
 tensorflow
